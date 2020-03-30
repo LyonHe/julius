@@ -1,44 +1,58 @@
 #include "game/system.h"
+#include "graphics/color.h"
 #include "input/cursor.h"
 
 #include "SDL.h"
 
-static SDL_Cursor *cursors[CURSOR_MAX];
+static SDL_Cursor* cursors[CURSOR_MAX];
+static SDL_Surface* cursor_surfaces[CURSOR_MAX];
+static int current_cursor_id = CURSOR_ARROW;
 
-static SDL_Cursor *init_cursor(const cursor *c)
+static const color_t mouse_colors[] = {
+    COLOR_MOUSE_TRANSPARENT,
+    COLOR_MOUSE_TRANSPARENT,
+    COLOR_MOUSE_TRANSPARENT,
+    COLOR_MOUSE_BLACK,
+    COLOR_MOUSE_DARK_GRAY,
+    COLOR_MOUSE_MEDIUM_GRAY,
+    COLOR_MOUSE_LIGHT_GRAY,
+    COLOR_MOUSE_WHITE
+};
+
+static SDL_Surface* generate_cursor_surface(const char* data, int width, int height)
 {
-    Uint8 data[4*32];
-    Uint8 mask[4*32];
-    int b = -1;
-    for (int i = 0; i < 32 * 32; i++) {
-        if (i % 8 ) {
-            data[b] <<= 1;
-            mask[b] <<= 1;
-        } else {
-            b++;
-            data[b] = mask[b] = 0;
-        }
-        switch (c->data[i]) {
-            case 'X':
-                data[b] |= 0x01;
-                // fallthrough
-            case '.':
-                mask[b] |= 0x01;
-                break;
-        }
+    SDL_Surface *cursor_surface = SDL_CreateRGBSurface(0, width, height, 32, 0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff);
+    color_t *pixels = cursor_surface->pixels;
+    for (int i = 0; i < width * height; ++i) {
+        pixels[i] = mouse_colors[data[i] - 32];
     }
-    return SDL_CreateCursor(data, mask, 32, 32, c->hotspot_x, c->hotspot_y);
+    return cursor_surface;
 }
 
-void system_init_cursors(void)
+cursor_scale get_cursor_scale(int scale_percentage)
 {
-    for (int i = 0; i < CURSOR_MAX; i++) {
-        cursors[i] = init_cursor(input_cursor_data(i));
+    if (scale_percentage <= 100) {
+        return CURSOR_SCALE_1;
+    } else if (scale_percentage <= 150) {
+        return CURSOR_SCALE_1_5;
+    } else {
+        return CURSOR_SCALE_2;
     }
-    system_set_cursor(CURSOR_ARROW);
+}
+
+void platform_init_cursors(int scale_percentage)
+{
+    cursor_scale cur_scale = get_cursor_scale(scale_percentage);
+    for (int i = 0; i < CURSOR_MAX; i++) {
+        const cursor* c = input_cursor_data(i, cur_scale);
+        cursor_surfaces[i] = generate_cursor_surface(c->data, c->width, c->height);
+        cursors[i] = SDL_CreateColorCursor(cursor_surfaces[i], c->hotspot_x, c->hotspot_y);
+    }
+    system_set_cursor(current_cursor_id);
 }
 
 void system_set_cursor(int cursor_id)
 {
+    current_cursor_id = cursor_id;
     SDL_SetCursor(cursors[cursor_id]);
 }

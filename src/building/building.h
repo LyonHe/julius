@@ -4,7 +4,7 @@
 #include "building/type.h"
 #include "core/buffer.h"
 
-#define MAX_BUILDINGS 2000
+#define MAX_BUILDINGS 10000
 
 typedef struct {
     int id;
@@ -26,6 +26,8 @@ typedef struct {
         short orientation;
         short fort_figure_type;
         short native_meeting_center_id;
+        short market_goods;
+        short roadblock_exceptions;
     } subtype;
     unsigned char road_network_id;
     unsigned short created_sequence;

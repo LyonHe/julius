@@ -18,8 +18,8 @@
 static void button_graph(int param1, int param2);
 
 static generic_button graph_buttons[] = {
-    {503,  61, 607, 116, GB_IMMEDIATE, button_graph, button_none, 0, 0},
-    {503, 161, 607, 216, GB_IMMEDIATE, button_graph, button_none, 1, 0},
+    {503,  61, 104, 55, button_graph, button_none, 0, 0},
+    {503, 161, 104, 55, button_graph, button_none, 1, 0},
 };
 
 static int focus_button_id;
@@ -426,9 +426,9 @@ static void draw_foreground(void)
     }
 }
 
-static void handle_mouse(const mouse *m)
+static int handle_mouse(const mouse *m)
 {
-    generic_buttons_handle_mouse(m, 0, 0, graph_buttons, 2, &focus_button_id);
+    return generic_buttons_handle_mouse(m, 0, 0, graph_buttons, 2, &focus_button_id);
 }
 
 static void button_graph(int param1, int param2)

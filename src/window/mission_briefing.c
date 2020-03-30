@@ -1,6 +1,7 @@
 #include "mission_briefing.h"
 
 #include "city/mission.h"
+#include "core/image_group.h"
 #include "core/lang.h"
 #include "game/file.h"
 #include "game/mission.h"
@@ -27,10 +28,10 @@ static const int GOAL_OFFSETS_X[] = {32, 288, 32, 288, 288, 288};
 static const int GOAL_OFFSETS_Y[] = {95, 95, 117, 117, 73, 135};
 
 static image_button image_button_back = {
-    0, 0, 31, 20, IB_NORMAL, 90, 8, button_back, button_none, 0, 0, 1
+    0, 0, 31, 20, IB_NORMAL, GROUP_MESSAGE_ICON, 8, button_back, button_none, 0, 0, 1
 };
 static image_button image_button_start_mission = {
-    0, 0, 27, 27, IB_NORMAL, 92, 56, button_start_mission, button_none, 1, 0, 1
+    0, 0, 27, 27, IB_NORMAL, GROUP_SIDEBAR_BUTTONS, 56, button_start_mission, button_none, 1, 0, 1
 };
 
 static struct {
@@ -54,19 +55,22 @@ static void draw_background(void)
             return;
         }
     }
+
+    window_draw_underlying_window();
     
     graphics_in_dialog();
     int text_id = 200 + scenario_campaign_mission();
-    
+    const lang_message *msg = lang_get_message(text_id);
+
     outer_panel_draw(16, 32, 38, 27);
-    text_draw(lang_get_message(text_id)->title.text, 32, 48, FONT_LARGE_BLACK, 0);
-    text_draw(lang_get_message(text_id)->subtitle.text, 32, 78, FONT_NORMAL_BLACK, 0);
+    text_draw(msg->title.text, 32, 48, FONT_LARGE_BLACK, 0);
+    text_draw(msg->subtitle.text, 32, 78, FONT_NORMAL_BLACK, 0);
 
     lang_text_draw(62, 7, 376, 433, FONT_NORMAL_BLACK);
     if (!data.is_review && game_mission_has_choice()) {
         lang_text_draw(13, 4, 66, 435, FONT_NORMAL_BLACK);
     }
-    
+
     inner_panel_draw(32, 96, 33, 5);
     lang_text_draw(62, 10, 48, 104, FONT_NORMAL_WHITE);
     int goal_index = 0;
@@ -117,14 +121,14 @@ static void draw_background(void)
         label_draw(16 + x, 32 + y, 31, 1);
         lang_text_draw(62, immediate_goal_text, 16 + x + 8, 32 + y + 3, FONT_NORMAL_RED);
     }
-    
+
     inner_panel_draw(32, 184, 33, 15);
-    
+
     rich_text_set_fonts(FONT_NORMAL_WHITE, FONT_NORMAL_RED);
-    rich_text_init(lang_get_message(text_id)->content.text, 64, 184, 31, 15, 0);
+    rich_text_init(msg->content.text, 64, 184, 31, 15, 0);
 
     graphics_set_clip_rectangle(35, 187, 522, 234);
-    rich_text_draw(lang_get_message(text_id)->content.text, 48, 196, 496, 14, 0);
+    rich_text_draw(msg->content.text, 48, 196, 496, 14, 0);
     graphics_reset_clip_rectangle();
 
     graphics_reset_dialog();
@@ -169,7 +173,7 @@ static void button_back(int param1, int param2)
 static void button_start_mission(int param1, int param2)
 {
     sound_speech_stop();
-    sound_music_reset();
+    sound_music_update(1);
     window_city_show();
     city_mission_reset_save_start();
 }

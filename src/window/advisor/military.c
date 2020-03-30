@@ -21,24 +21,24 @@ static void button_return_to_fort(int legion_id, int param2);
 static void button_empire_service(int legion_id, int param2);
 
 static generic_button fort_buttons[] = {
-    {400, 83, 430, 113, GB_IMMEDIATE, button_go_to_legion, button_none, 1, 0},
-    {480, 83, 510, 113, GB_IMMEDIATE, button_return_to_fort, button_none, 1, 0},
-    {560, 83, 590, 113, GB_IMMEDIATE, button_empire_service, button_none, 1, 0},
-    {400, 127, 430, 157, GB_IMMEDIATE, button_go_to_legion, button_none, 2, 0},
-    {480, 127, 510, 157, GB_IMMEDIATE, button_return_to_fort, button_none, 2, 0},
-    {560, 127, 590, 157, GB_IMMEDIATE, button_empire_service, button_none, 2, 0},
-    {400, 171, 430, 201, GB_IMMEDIATE, button_go_to_legion, button_none, 3, 0},
-    {480, 171, 510, 201, GB_IMMEDIATE, button_return_to_fort, button_none, 3, 0},
-    {560, 171, 590, 201, GB_IMMEDIATE, button_empire_service, button_none, 3, 0},
-    {400, 215, 430, 245, GB_IMMEDIATE, button_go_to_legion, button_none, 4, 0},
-    {480, 215, 510, 245, GB_IMMEDIATE, button_return_to_fort, button_none, 4, 0},
-    {560, 215, 590, 245, GB_IMMEDIATE, button_empire_service, button_none, 4, 0},
-    {400, 259, 430, 289, GB_IMMEDIATE, button_go_to_legion, button_none, 5, 0},
-    {480, 259, 510, 289, GB_IMMEDIATE, button_return_to_fort, button_none, 5, 0},
-    {560, 259, 590, 289, GB_IMMEDIATE, button_empire_service, button_none, 5, 0},
-    {400, 303, 430, 333, GB_IMMEDIATE, button_go_to_legion, button_none, 6, 0},
-    {480, 303, 510, 333, GB_IMMEDIATE, button_return_to_fort, button_none, 6, 0},
-    {560, 303, 590, 333, GB_IMMEDIATE, button_empire_service, button_none, 6, 0},
+    {400, 83, 30, 30, button_go_to_legion, button_none, 1, 0},
+    {480, 83, 30, 30, button_return_to_fort, button_none, 1, 0},
+    {560, 83, 30, 30, button_empire_service, button_none, 1, 0},
+    {400, 127, 30, 30, button_go_to_legion, button_none, 2, 0},
+    {480, 127, 30, 30, button_return_to_fort, button_none, 2, 0},
+    {560, 127, 30, 30, button_empire_service, button_none, 2, 0},
+    {400, 171, 30, 30, button_go_to_legion, button_none, 3, 0},
+    {480, 171, 30, 30, button_return_to_fort, button_none, 3, 0},
+    {560, 171, 30, 30, button_empire_service, button_none, 3, 0},
+    {400, 215, 30, 30, button_go_to_legion, button_none, 4, 0},
+    {480, 215, 30, 30, button_return_to_fort, button_none, 4, 0},
+    {560, 215, 30, 30, button_empire_service, button_none, 4, 0},
+    {400, 259, 30, 30, button_go_to_legion, button_none, 5, 0},
+    {480, 259, 30, 30, button_return_to_fort, button_none, 5, 0},
+    {560, 259, 30, 30, button_empire_service, button_none, 5, 0},
+    {400, 303, 30, 30, button_go_to_legion, button_none, 6, 0},
+    {480, 303, 30, 30, button_return_to_fort, button_none, 6, 0},
+    {560, 303, 30, 30, button_empire_service, button_none, 6, 0},
 };
 
 static int focus_button_id;
@@ -80,24 +80,26 @@ static int draw_background(void)
     } else {
         distant_battle_text_id = 12;
     }
+    int bullet_x = 60;
+    int text_x = 80;
     if (num_legions <= 0) {
-        image_draw(image_group(GROUP_BULLET), 100, 359);
-        lang_text_draw(51, enemy_text_id, 120, 358, FONT_NORMAL_BLACK);
+        image_draw(image_group(GROUP_BULLET), bullet_x, 359);
+        lang_text_draw(51, enemy_text_id, text_x, 358, FONT_NORMAL_BLACK);
 
-        image_draw(image_group(GROUP_BULLET), 100, 379);
-        lang_text_draw(51, distant_battle_text_id, 120, 378, FONT_NORMAL_BLACK);
+        image_draw(image_group(GROUP_BULLET), bullet_x, 379);
+        lang_text_draw(51, distant_battle_text_id, text_x, 378, FONT_NORMAL_BLACK);
     } else {
         // has forts
-        image_draw(image_group(GROUP_BULLET), 100, 349);
-        int width = lang_text_draw_amount(8, 46, city_military_total_soldiers(), 120, 348, FONT_NORMAL_BLACK);
-        width += lang_text_draw(51, 7, 120 + width, 348, FONT_NORMAL_BLACK);
-        lang_text_draw_amount(8, 48, city_military_total_legions(), 120 + width, 348, FONT_NORMAL_BLACK);
+        image_draw(image_group(GROUP_BULLET), bullet_x, 349);
+        int width = lang_text_draw_amount(8, 46, city_military_total_soldiers(), text_x, 348, FONT_NORMAL_BLACK);
+        width += lang_text_draw(51, 7, text_x + width, 348, FONT_NORMAL_BLACK);
+        lang_text_draw_amount(8, 48, city_military_total_legions(), text_x + width, 348, FONT_NORMAL_BLACK);
 
-        image_draw(image_group(GROUP_BULLET), 100, 369);
-        lang_text_draw(51, enemy_text_id, 120, 368, FONT_NORMAL_BLACK);
+        image_draw(image_group(GROUP_BULLET), bullet_x, 369);
+        lang_text_draw(51, enemy_text_id, text_x, 368, FONT_NORMAL_BLACK);
 
-        image_draw(image_group(GROUP_BULLET), 100, 389);
-        lang_text_draw(51, distant_battle_text_id, 120, 388, FONT_NORMAL_BLACK);
+        image_draw(image_group(GROUP_BULLET), bullet_x, 389);
+        lang_text_draw(51, distant_battle_text_id, text_x, 388, FONT_NORMAL_BLACK);
     }
 
     inner_panel_draw(32, 70, 36, 17);
@@ -157,9 +159,9 @@ static void draw_foreground(void)
     }
 }
 
-static void handle_mouse(const mouse *m)
+static int handle_mouse(const mouse *m)
 {
-    generic_buttons_handle_mouse(m, 0, 0, fort_buttons, 3 * num_legions, &focus_button_id);
+    return generic_buttons_handle_mouse(m, 0, 0, fort_buttons, 3 * num_legions, &focus_button_id);
 }
 
 static void button_go_to_legion(int legion_id, int param2)

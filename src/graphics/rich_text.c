@@ -2,6 +2,7 @@
 
 #include "core/calc.h"
 #include "core/image.h"
+#include "core/image_group.h"
 #include "core/string.h"
 #include "graphics/image.h"
 #include "graphics/image_button.h"
@@ -9,11 +10,13 @@
 
 #define MAX_LINKS 50
 
+static void text_scroll(int is_down, int num_lines);
+
 static image_button image_button_scroll_up = {
-    0, 0, 39, 26, IB_SCROLL, 96, 8, rich_text_scroll, button_none, 0, 1, 1
+    0, 0, 39, 26, IB_SCROLL, GROUP_OK_CANCEL_SCROLL_BUTTONS, 8, text_scroll, button_none, 0, 1, 1
 };
 static image_button image_button_scroll_down = {
-    0, 0, 39, 26, IB_SCROLL, 96, 12, rich_text_scroll, button_none, 1, 1, 1
+    0, 0, 39, 26, IB_SCROLL, GROUP_OK_CANCEL_SCROLL_BUTTONS, 12, text_scroll, button_none, 1, 1, 1
 };
 
 static struct {
@@ -122,7 +125,7 @@ void rich_text_clear_links(void)
 
 int rich_text_get_clicked_link(const mouse *m)
 {
-    if (m->left.went_down) {
+    if (m->left.went_up) {
         for (int i = 0; i < num_links; i++) {
             if (m->x >= links[i].x_min && m->x <= links[i].x_max &&
                 m->y >= links[i].y_min && m->y <= links[i].y_max) {
@@ -145,101 +148,115 @@ static void add_link(int message_id, int x_start, int x_end, int y)
     }
 }
 
-static int get_character_width(uint8_t c, const font_definition *def)
-{
-    int image_offset = font_image_for(c);
-    if (!image_offset) {
-        return 0;
-    }
-    return 1 + image_letter(def->image_offset + image_offset - 1)->width;
-}
-
-static int get_word_width(const uint8_t *str, int *num_chars)
+static int get_word_width(const uint8_t *str, int in_link, int *num_chars)
 {
     int width = 0;
     int guard = 0;
     int word_char_seen = 0;
+    int start_link = 0;
     *num_chars = 0;
-    for (uint8_t c = *str; c; c = *++str) {
-        if (++guard >= 2000) {
-            break;
-        }
-        if (c == '@') {
-            c = *++str;
+    while (*str && ++guard < 2000) {
+        if (*str == '@') {
+            str++;
             if (!word_char_seen) {
-                if (c == 'P' || c == 'L') {
+                if (*str == 'P' || *str == 'L') {
                     *num_chars += 2;
                     width = 0;
                     break;
-                } else if (c == 'G') {
+                } else if (*str == 'G') {
                     // skip graphic
                     *num_chars += 2;
-                    while (c >= '0' && c <= '9') {
-                        c = *++str;
+                    while (*str >= '0' && *str <= '9') {
+                        str++;
                         (*num_chars)++;
                     }
                     width = 0;
                     break;
                 } else {
                     (*num_chars)++;
-                    while (c >= '0' && c <= '9') {
-                        c = *++str;
+                    while (*str >= '0' && *str <= '9') {
+                        str++;
                         (*num_chars)++;
                     }
+                    in_link = 1;
+                    start_link = 1;
                 }
             }
         }
-        if (c == ' ') {
+        int num_bytes = 1;
+        if (*str == ' ') {
             if (word_char_seen) {
                 break;
             }
             width += 4;
-        } else if (c > ' ') {
+        } else if (*str > ' ') {
             // normal char
-            width += get_character_width(c, normal_font_def);
+            int letter_id = font_letter_id(normal_font_def, str, &num_bytes);
+            if (letter_id >= 0) {
+                width += 1 + image_letter(letter_id)->width;
+            }
             word_char_seen = 1;
+            if (num_bytes > 1) {
+                if (start_link) {
+                    // add space before links in multibyte charsets
+                    width += 4;
+                    start_link = 0;
+                }
+                if (!in_link) {
+                    *num_chars += num_bytes;
+                    break;
+                }
+            }
         }
-        (*num_chars)++;
+        str += num_bytes;
+        *num_chars += num_bytes;
     }
     return width;
 }
 
-static int draw_character(const font_definition *def, uint8_t c, int x, int y, color_t color, int measure_only)
-{
-    int image_offset = font_image_for(c);
-    if (!image_offset) {
-        return def->space_width_draw;
-    }
-
-    int letter_id = def->image_offset + image_offset - 1;
-    const image *img = image_letter(letter_id);
-    if (!measure_only) {
-        int height = def->image_y_offset(c, img->height, 11);
-        image_draw_letter(letter_id, x, y - height, color);
-    }
-    return img->width;
-}
-
 static void draw_line(const uint8_t *str, int x, int y, color_t color, int measure_only)
 {
+    int start_link = 0;
     int num_link_chars = 0;
-    for (uint8_t c = *str; c; c = *++str) {
-        if (c == '@') {
+    while (*str) {
+        if (*str == '@') {
             int message_id = string_to_int(++str);
             while (*str >= '0' && *str <= '9') {
                 str++;
             }
-            int width = get_word_width(str, &num_link_chars);
+            int width = get_word_width(str, 1, &num_link_chars);
             add_link(message_id, x, x + width, y);
-            c = *str;
+            start_link = 1;
         }
-        if (c >= ' ') {
+        if (*str >= ' ') {
             const font_definition *def = normal_font_def;
             if (num_link_chars > 0) {
                 def = link_font_def;
-                num_link_chars--;
             }
-            x += draw_character(def, c, x, y, color, measure_only);
+
+            int num_bytes = 1;
+            int letter_id = font_letter_id(def, str, &num_bytes);
+            if (letter_id < 0) {
+                x += def->space_width_draw;
+            } else {
+                if (num_bytes > 1 && start_link) {
+                    // add space before links in multibyte charsets
+                    x += def->space_width_draw;
+                    start_link = 0;
+                }
+                const image *img = image_letter(letter_id);
+                if (!measure_only) {
+                    int height = def->image_y_offset(*str, img->height, def->line_height);
+                    image_draw_letter(def->font, letter_id, x, y - height, color);
+                }
+                x += img->width + def->letter_spacing_draw;
+            }
+            if (num_link_chars > 0) {
+                num_link_chars -= num_bytes;
+            }
+            str += num_bytes;
+        } else {
+            str++;
         }
     }
 }
@@ -274,7 +291,7 @@ static int draw_text(const uint8_t *text, int x_offset, int y_offset,
                 break;
             }
             int word_num_chars;
-            current_width += get_word_width(text, &word_num_chars);
+            current_width += get_word_width(text, 0, &word_num_chars);
             if (current_width >= box_width) {
                 if (current_width == 0) {
                     has_more_characters = 0;
@@ -435,9 +452,9 @@ static int handle_scrollbar_dot(const mouse *m)
 int rich_text_handle_mouse(const mouse *m)
 {
     if (m->scrolled == SCROLL_DOWN) {
-        rich_text_scroll(1, 3);
+        text_scroll(1, 3);
     } else if (m->scrolled == SCROLL_UP) {
-        rich_text_scroll(0, 3);
+        text_scroll(0, 3);
     }
 
     if (image_buttons_handle_mouse(
@@ -454,7 +471,7 @@ int rich_text_handle_mouse(const mouse *m)
     return handle_scrollbar_dot(m);
 }
 
-void rich_text_scroll(int is_down, int num_lines)
+static void text_scroll(int is_down, int num_lines)
 {
     if (is_down) {
         data.scroll_position += num_lines;

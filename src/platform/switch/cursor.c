@@ -1,11 +1,17 @@
 #include "graphics/color.h"
 #include "game/system.h"
 #include "input/cursor.h"
+#include "platform/cursor.h"
+
+#include "switch.h"
 
 #include "SDL.h"
 
-static SDL_Texture *cursors[CURSOR_MAX];
-SDL_Texture *current_cursor;
+#define CURSOR_SIZE 32
+#define ALPHA_OPAQUE (0xFFu << 24)
+
+static switch_cursor cursors[CURSOR_MAX];
+switch_cursor *current_cursor;
 
 extern struct {
     SDL_Window *window;
@@ -15,42 +21,44 @@ extern struct {
 
 static SDL_Texture *init_cursor(const cursor *c)
 {
+    SDL_Texture *tex = SDL_CreateTexture(SDL.renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STATIC, CURSOR_SIZE, CURSOR_SIZE);
 
-    SDL_Texture *tex = SDL_CreateTexture(SDL.renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 32, 32);
+    uint32_t pixels[CURSOR_SIZE * CURSOR_SIZE] = { 0 };
 
-    uint32_t pixels[32 * 32];
-
-    for (int i = 0; i < 32; i++) {
-        for (int j = 0; j < 32; j++) {
-            switch (c->data[i * 32 + j]) {
-                case 'X':
-                    pixels[i * 32 + j] =  0xFF000000; //black
+    for (int y = 0; y < c->height; y++) {
+        for (int x = 0; x < c->width; x++) {
+            switch (c->data[y * c->width + x]) {
+                case '#':
+                    pixels[y * CURSOR_SIZE + x] = COLOR_BLACK | ALPHA_OPAQUE;
                     break;
-                case '.':
-                    pixels[i * 32 + j] = 0xFFFFFFFF; //white
+                case '\'':
+                    pixels[y * CURSOR_SIZE + x] = COLOR_WHITE | ALPHA_OPAQUE;
                     break;
                 case ' ':
-                    pixels[i * 32 + j] = 0x00000000; //transparent
-                    break; // Transparent is 0x00000000 which is the default value of the buffer
+                    pixels[y * CURSOR_SIZE + x] = 0x00000000; // transparent
+                    break;
             }
         }
     }
 
-    SDL_UpdateTexture(tex, NULL, pixels, 32 * 4);
+    SDL_UpdateTexture(tex, NULL, pixels, CURSOR_SIZE * 4);
     SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_BLEND);
 
     return tex;
 }
 
-void system_init_cursors(void)
+void platform_init_cursors(int scale_percentage)
 {
     for (int i = 0; i < CURSOR_MAX; i++) {
-        cursors[i] = init_cursor(input_cursor_data(i));
+        const cursor *c = input_cursor_data(i, CURSOR_SCALE_1);
+        cursors[i].texture = init_cursor(c);
+        cursors[i].hotspot_x = c->hotspot_x;
+        cursors[i].hotspot_y = c->hotspot_y;
     }
     system_set_cursor(CURSOR_ARROW);
 }
 
 void system_set_cursor(int cursor_id)
 {
-    current_cursor = cursors[cursor_id];
+    current_cursor = &cursors[cursor_id];
 }

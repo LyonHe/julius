@@ -89,17 +89,17 @@ int text_get_width(const uint8_t *str, font_t font)
     int maxlen = 10000;
     int width = 0;
     while (*str && maxlen > 0) {
+        int num_bytes = 1;
         if (*str == ' ') {
             width += def->space_width;
         } else {
-            int image_offset = font_image_for(*str);
-            if (image_offset) {
-                int image_id = def->image_offset + image_offset - 1;
-                width += def->letter_spacing + image_letter(image_id)->width;
+            int letter_id = font_letter_id(def, str, &num_bytes);
+            if (letter_id >= 0) {
+                width += def->letter_spacing + image_letter(letter_id)->width;
             }
         }
-        str++;
-        maxlen--;
+        str += num_bytes;
+        maxlen -= num_bytes;
     }
     return width;
 }
@@ -110,27 +110,27 @@ unsigned int text_get_max_length_for_width(const uint8_t *str, int length, font_
     length = (!length) ? string_length(str) : length;
     unsigned int maxlen = length;
     unsigned int width = 0;
-    int image_base = image_group(GROUP_FONT);
     int step = 1;
     if (invert) {
         str += length - 1;
         step = -1;
     }
     while (maxlen) {
+        // TODO FIX THIS: MULTIBYTE CANNOT BE TRAVERSED BACKWARDS
+        int num_bytes = 1;
         if (*str == ' ') {
             width += def->space_width;
         } else {
-            int image_offset = font_image_for(*str);
-            if (image_offset) {
-                int image_id = image_base + def->image_offset + image_offset - 1;
-                width += def->letter_spacing + image_get(image_id)->width;
+            int letter_id = font_letter_id(def, str, &num_bytes);
+            if (letter_id >= 0) {
+                width += def->letter_spacing + image_letter(letter_id)->width;
             }
         }
         if (width > requested_width) {
             break;
         }
-        str += step;
-        maxlen--;
+        str += step * num_bytes;
+        maxlen -= num_bytes;
     }
     return length - maxlen;
 }
@@ -140,16 +140,16 @@ void text_ellipsize(uint8_t *str, font_t font, int requested_width)
     uint8_t *orig_str = str;
     const font_definition *def = font_definition_for(font);
     int ellipsis_width = get_ellipsis_width(font);
-    unsigned int maxlen = 10000;
+    int maxlen = 10000;
     int width = 0;
     int length_with_ellipsis = 0;
     while (*str && maxlen > 0) {
+        int num_bytes = 1;
         if (*str == ' ') {
             width += def->space_width;
         } else {
-            int image_offset = font_image_for(*str);
-            if (image_offset) {
-                int letter_id = def->image_offset + image_offset - 1;
+            int letter_id = font_letter_id(def, str, &num_bytes);
+            if (letter_id >= 0) {
                 width += def->letter_spacing + image_letter(letter_id)->width;
             }
         }
@@ -159,22 +159,12 @@ void text_ellipsize(uint8_t *str, font_t font, int requested_width)
         if (width > requested_width) {
             break;
         }
-        str++;
-        maxlen--;
+        str += num_bytes;
+        maxlen -= num_bytes;
     }
     if (10000 - maxlen < string_length(orig_str)) {
         string_copy(ellipsis.string, orig_str + length_with_ellipsis, ELLIPSIS_LENGTH);
     }
-}
-
-static int get_character_width(uint8_t c, const font_definition *def)
-{
-    int image_offset = font_image_for(c);
-    if (!image_offset) {
-        return 0;
-    }
-    int letter_id = def->image_offset + image_offset - 1;
-    return 1 + image_letter(letter_id)->width;
 }
 
 static int get_word_width(const uint8_t *str, font_t font, int *out_num_chars)
@@ -184,25 +174,31 @@ static int get_word_width(const uint8_t *str, font_t font, int *out_num_chars)
     int guard = 0;
     int word_char_seen = 0;
     int num_chars = 0;
-    for (uint8_t c = *str; c; c = *++str) {
-        if (++guard >= 200) {
-            break;
-        }
-        if (c == ' ') {
+    while (*str && ++guard < 200) {
+        int num_bytes = 1;
+        if (*str == ' ' || *str == '\n') {
             if (word_char_seen) {
                 break;
             }
             width += 4;
-        } else if (c == '$') {
+        } else if (*str == '$') {
             if (word_char_seen) {
                 break;
             }
-        } else if (c > ' ') {
+        } else if (*str > ' ') {
             // normal char
-            width += get_character_width(c, def);
+            int letter_id = font_letter_id(def, str, &num_bytes);
+            if (letter_id >= 0) {
+                width += 1 + image_letter(letter_id)->width;
+            }
             word_char_seen = 1;
+            if (num_bytes > 1) {
+                num_chars += num_bytes;
+                break;
+            }
         }
-        num_chars++;
+        str += num_bytes;
+        num_chars += num_bytes;
     }
     *out_num_chars = num_chars;
     return width;
@@ -217,16 +213,6 @@ void text_draw_centered(const uint8_t *str, int x, int y, int box_width, font_t 
     text_draw(str, offset + x, y, font, color);
 }
 
-static int draw_character(const font_definition *def, unsigned int c, int x, int y, color_t color)
-{
-    int image_offset = font_image_for(c);
-    int letter_id = def->image_offset + image_offset - 1;
-    const image *img = image_letter(letter_id);
-    int height = def->image_y_offset(c, img->height, def->line_height);
-    image_draw_letter(letter_id, x, y - height, color);
-    return img->width;
-}
-
 int text_draw(const uint8_t *str, int x, int y, font_t font, color_t color)
 {
     const font_definition *def = font_definition_for(font);
@@ -238,20 +224,19 @@ int text_draw(const uint8_t *str, int x, int y, font_t font, color_t color)
     }
 
     int current_x = x;
-    for (int i = 0; i < length; ++i) {
-        uint8_t c = *str;
+    while (length > 0) {
+        int num_bytes = 1;
 
-        if (c == '_') {
-            c = ' ';
-        }
-
-        if (c >= ' ') {
-            int graphic = font_image_for(c);
+        if (*str >= ' ') {
+            int letter_id = font_letter_id(def, str, &num_bytes);
             int width;
-            if (graphic == 0) {
+            if (*str == ' ' || *str == '_' || letter_id < 0) {
                 width = def->space_width_draw;
             } else {
-                width = def->letter_spacing_draw + draw_character(def, c, current_x, y, color);
+                const image *img = image_letter(letter_id);
+                int height = def->image_y_offset(*str, img->height, def->line_height);
+                image_draw_letter(def->font, letter_id, current_x, y - height, color);
+                width = def->letter_spacing_draw + img->width;
             }
             if (input_cursor.capture && input_cursor.position == input_cursor.cursor_position) {
                 if (!input_cursor.seen) {
@@ -263,7 +248,8 @@ int text_draw(const uint8_t *str, int x, int y, font_t font, color_t color)
             current_x += width;
         }
 
-        str++;
+        str += num_bytes;
+        length -= num_bytes;
         input_cursor.position++;
     }
     if (input_cursor.capture && !input_cursor.seen) {
@@ -324,6 +310,13 @@ void text_draw_number_centered(int value, int x_offset, int y_offset, int box_wi
     text_draw_centered(str, x_offset, y_offset, box_width, font, 0);
 }
 
+void text_draw_number_centered_prefix(int value, char prefix, int x_offset, int y_offset, int box_width, font_t font)
+{
+    uint8_t str[100];
+    number_to_string(str, value, prefix, " ");
+    text_draw_centered(str, x_offset, y_offset, box_width, font, 0);
+}
+
 void text_draw_number_centered_colored(int value, int x_offset, int y_offset, int box_width, font_t font, color_t color)
 {
     uint8_t str[100];
@@ -376,10 +369,17 @@ int text_draw_multiline(const uint8_t *str, int x_offset, int y_offset, int box_
                 }
             } else {
                 for (int i = 0; i < word_num_chars; i++) {
-                    tmp_line[line_index++] = *str++;
+                    if (line_index == 0 && *str <= ' ') {
+                        str++; // skip whitespace at start of line
+                    } else {
+                        tmp_line[line_index++] = *str++;
+                    }
                 }
                 if (!*str) {
                     has_more_characters = 0;
+                } else if (*str == '\n') {
+                    str++;
+                    break;
                 }
             }
         }

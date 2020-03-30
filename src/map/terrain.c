@@ -9,7 +9,7 @@ static grid_u16 terrain_grid_backup;
 
 int map_terrain_is(int grid_offset, int terrain)
 {
-    return terrain_grid.items[grid_offset] & terrain;
+    return grid_offset >= 0 && grid_offset < GRID_SIZE * GRID_SIZE && terrain_grid.items[grid_offset] & terrain;
 }
 
 int map_terrain_get(int grid_offset)
@@ -178,6 +178,22 @@ int map_terrain_all_tiles_in_radius_are(int x, int y, int size, int radius, int 
     return 1;
 }
 
+int map_terrain_has_only_rocks_trees_in_ring(int x, int y, int distance)
+{
+    int start = map_ring_start(1, distance);
+    int end = map_ring_end(1, distance);
+    int base_offset = map_grid_offset(x, y);
+    for (int i = start; i < end; i++) {
+        const ring_tile *tile = map_ring_tile(i);
+        if (map_ring_is_inside_map(x + tile->x, y + tile->y)) {
+            if (!map_terrain_is(base_offset + tile->grid_offset, TERRAIN_ROCK | TERRAIN_TREE)) {
+                return 0;
+            }
+        }
+    }
+    return 1;
+}
+
 int map_terrain_has_only_meadow_in_ring(int x, int y, int distance)
 {
     int start = map_ring_start(1, distance);
@@ -251,6 +267,12 @@ static void add_road(int grid_offset)
     }
 }
 
+void map_terrain_add_roadblock_road(int x, int y, int orientation)
+{
+    // roads under roadblock
+    map_terrain_add(map_grid_offset(x,y), TERRAIN_ROAD);
+}
+
 void map_terrain_add_gatehouse_roads(int x, int y, int orientation)
 {
     // roads under gatehouse
@@ -316,6 +338,22 @@ void map_terrain_restore(void)
 void map_terrain_clear(void)
 {
     map_grid_clear_u16(terrain_grid.items);
+}
+
+void map_terrain_init_outside_map(void)
+{
+    int map_width, map_height;
+    map_grid_size(&map_width, &map_height);
+    int y_start = (GRID_SIZE - map_height) / 2;
+    int x_start = (GRID_SIZE - map_width) / 2;
+    for (int y = 0; y < GRID_SIZE; y++) {
+        int y_outside_map = y < y_start || y >= y_start + map_height;
+        for (int x = 0; x < GRID_SIZE; x++) {
+            if (y_outside_map || x < x_start || x >= x_start + map_width) {
+                terrain_grid.items[x + GRID_SIZE * y] = TERRAIN_TREE | TERRAIN_WATER;
+            }
+        }
+    }
 }
 
 void map_terrain_save_state(buffer *buf)

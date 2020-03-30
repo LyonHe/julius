@@ -1,5 +1,6 @@
 #include "trade_opened.h"
 
+#include "core/image_group.h"
 #include "empire/city.h"
 #include "graphics/graphics.h"
 #include "graphics/image_button.h"
@@ -13,8 +14,8 @@ static void button_advisor(int advisor, int param2);
 static void button_close(int param1, int param2);
 
 static image_button image_buttons[] = {
-    {92, 248, 28, 28, IB_NORMAL, 199, 12, button_advisor, button_none, ADVISOR_TRADE, 0, 1},
-    {522, 252, 24, 24, IB_NORMAL, 134, 4, button_close, button_none, 0, 0, 1},
+    {92, 248, 28, 28, IB_NORMAL, GROUP_MESSAGE_ADVISOR_BUTTONS, 12, button_advisor, button_none, ADVISOR_TRADE, 0, 1},
+    {522, 252, 24, 24, IB_NORMAL, GROUP_CONTEXT_ICONS, 4, button_close, button_none, 0, 0, 1},
 };
 
 static int selected_city;
@@ -45,7 +46,12 @@ static void draw_foreground(void)
 
 static void handle_mouse(const mouse *m)
 {
-    image_buttons_handle_mouse(mouse_in_dialog(m), 0, 0, image_buttons, 2, 0);
+    if (image_buttons_handle_mouse(mouse_in_dialog(m), 0, 0, image_buttons, 2, 0)) {
+        return;
+    }
+    if (m->right.went_up || (m->is_touch && m->left.double_click)) {
+        window_empire_show();
+    }
 }
 
 static void button_advisor(int advisor, int param2)

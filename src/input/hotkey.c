@@ -17,17 +17,19 @@
 #include "map/bookmark.h"
 #include "map/grid.h"
 #include "scenario/invasion.h"
+#include "platform/screen.h"
 #include "window/advisors.h"
 #include "window/building_info.h"
+#include "window/file_dialog.h"
+#include "window/numeric_input.h"
+#include "window/plain_message_dialog.h"
 #include "window/popup_dialog.h"
 #include "window/city.h"
+#include "window/editor/empire.h"
 
 static struct {
-    int ctrl_down;
-    int alt_down;
-    int shift_down;
     int is_cheating;
-} data = {0, 0, 0, 0};
+} data;
 
 static void change_game_speed(int is_down)
 {
@@ -98,9 +100,9 @@ static void cycle_legion(void)
     if (window_is(WINDOW_CITY)) {
         int legion_id = current_legion_id;
         current_legion_id = 0;
-        for (int i = 1; i <= MAX_LEGIONS; i++) {
+        for (int i = 1; i <= formation_get_max_legions(); i++) {
             legion_id++;
-            if (legion_id > MAX_LEGIONS) {
+            if (legion_id > formation_get_max_legions()) {
                 legion_id = 1;
             }
             const formation *m = formation_get(legion_id);
@@ -146,112 +148,231 @@ static void cheat_money(void)
     }
 }
 
-void hotkey_character(int c)
+static void editor_toggle_battle_info(void)
 {
-    if (data.alt_down) {
+    if (window_is(WINDOW_EDITOR_EMPIRE)) {
+        window_editor_empire_toggle_battle_info();
+    }
+}
+
+static void input_number(int number)
+{
+    if (window_is(WINDOW_NUMERIC_INPUT)) {
+        window_numeric_input_number(number);
+    }
+}
+
+static void load_file(void)
+{
+    if (window_is(WINDOW_EDITOR_MAP)) {
+        window_file_dialog_show(FILE_TYPE_SCENARIO, FILE_DIALOG_LOAD);
+    } else if (window_is(WINDOW_CITY) || window_is(WINDOW_MAIN_MENU)) {
+        window_file_dialog_show(FILE_TYPE_SAVED_GAME, FILE_DIALOG_LOAD);
+    }
+}
+
+static void save_file(void)
+{
+    if (window_is(WINDOW_EDITOR_MAP)) {
+        window_file_dialog_show(FILE_TYPE_SCENARIO, FILE_DIALOG_SAVE);
+    }
+    else if (window_is(WINDOW_CITY)) {
+        window_file_dialog_show(FILE_TYPE_SAVED_GAME, FILE_DIALOG_SAVE);
+    }
+}
+
+static void change_zoom(int direction)
+{
+    /*if (!window_is(WINDOW_CITY)) {
+        return;
+    }*/
+
+    // direction = -1 => zoom out
+    // direction = 1  => zoom in
+    int zoom_amount = 0;
+    if (direction == 1) {
+        zoom_amount = 10;
+    }
+    else if (direction == -1) {
+        zoom_amount = -10;
+    }
+    
+    int current_scale = platform_screen_get_scale();
+    current_scale += zoom_amount;
+    if (current_scale < 50 || current_scale > 150) {
+        // forbidden, do nothing
+        return;
+    }
+
+    int width, height;
+    platform_screen_set_scale(current_scale);    
+    platform_screen_get_scaled_params(&width, &height);    
+    platform_screen_resize(width, height, 0);
+}
+
+void hotkey_character(int c, int with_ctrl, int with_alt)
+{
+    if (with_ctrl) {
         switch (c) {
-            case 'X': case 'x':
-                hotkey_esc();
+            case 'a':
+                editor_toggle_battle_info();
                 break;
-            case 'K': case 'k':
-                cheat_init_or_invasion();
-            case 'C': case 'c':
-                cheat_money();
+            case 'o':
+                load_file();
                 break;
-            case 'V': case 'v':
-                cheat_victory();
+            case 's':
+                save_file();
                 break;
         }
         return;
     }
+    if (with_alt) {
+        switch (c) {
+            case 'x':
+                hotkey_esc();
+                break;
+            case 'k':
+                cheat_init_or_invasion();
+                break;
+            case 'c':
+                cheat_money();
+                break;
+            case 'v':
+                cheat_victory();
+                break;
+
+            // Azerty keyboards need alt gr for these keys
+            case '[': case '5':
+                change_game_speed(1);
+                break;
+            case ']': case '-':
+                change_game_speed(0);
+                break;
+        }
+        return;
+    }
+
     switch (c) {
         case '[':
-            change_game_speed(1);
+            change_zoom(-1);
+            //change_game_speed(1);
             break;
         case ']':
-            change_game_speed(0);
+            change_zoom(+1);
+            //change_game_speed(0);
             break;
         case ' ':
             toggle_overlay();
             break;
-        case 'P': case 'p':
+        case 'p':
             toggle_pause();
             break;
-        case 'F': case 'f':
+        case 'f':
             show_overlay(OVERLAY_FIRE);
             break;
-        case 'D': case 'd':
+        case 'd':
             show_overlay(OVERLAY_DAMAGE);
             break;
-        case 'C': case 'c':
+        case 'c':
             show_overlay(OVERLAY_CRIME);
             break;
-        case 'T': case 't':
+        case 't':
             show_overlay(OVERLAY_PROBLEMS);
             break;
-        case 'W': case 'w':
+        case 'w':
             show_overlay(OVERLAY_WATER);
             break;
-        case 'L': case 'l':
+        case 'l':
             cycle_legion();
             break;
         case '1':
             show_advisor(ADVISOR_LABOR);
+            input_number(1);
             break;
         case '2':
             show_advisor(ADVISOR_MILITARY);
+            input_number(2);
             break;
         case '3':
             show_advisor(ADVISOR_IMPERIAL);
+            input_number(3);
             break;
         case '4':
             show_advisor(ADVISOR_RATINGS);
+            input_number(4);
             break;
         case '5':
             show_advisor(ADVISOR_TRADE);
+            input_number(5);
             break;
         case '6':
             show_advisor(ADVISOR_POPULATION);
+            input_number(6);
             break;
         case '7':
             show_advisor(ADVISOR_HEALTH);
+            input_number(7);
             break;
         case '8':
             show_advisor(ADVISOR_EDUCATION);
+            input_number(8);
             break;
         case '9':
             show_advisor(ADVISOR_ENTERTAINMENT);
+            input_number(9);
             break;
         case '0':
             show_advisor(ADVISOR_RELIGION);
+            input_number(0);
             break;
         case '-':
             show_advisor(ADVISOR_FINANCIAL);
             break;
         case '=':
+        case '+':
             show_advisor(ADVISOR_CHIEF);
             break;
     }
 }
 
-void hotkey_left(void)
+void hotkey_left_press(void)
 {
-    scroll_arrow_left();
+    scroll_arrow_left(1);
 }
 
-void hotkey_right(void)
+void hotkey_right_press(void)
 {
-    scroll_arrow_right();
+    scroll_arrow_right(1);
 }
 
-void hotkey_up(void)
+void hotkey_up_press(void)
 {
-    scroll_arrow_up();
+    scroll_arrow_up(1);
 }
 
-void hotkey_down(void)
+void hotkey_down_press(void)
 {
-    scroll_arrow_down();
+    scroll_arrow_down(1);
+}
+
+void hotkey_left_release(void)
+{
+    scroll_arrow_left(0);
+}
+
+void hotkey_right_release(void)
+{
+    scroll_arrow_right(0);
+}
+
+void hotkey_up_release(void)
+{
+    scroll_arrow_up(0);
+}
+
+void hotkey_down_release(void)
+{
+    scroll_arrow_down(0);
 }
 
 void hotkey_home(void)
@@ -293,10 +414,19 @@ void hotkey_page_down(void)
     change_game_speed(1);
 }
 
-void hotkey_enter(void)
+void hotkey_enter(int with_alt)
 {
+    if (with_alt) {
+        system_set_fullscreen(!setting_fullscreen());
+        return;
+    }
+
     if (window_is(WINDOW_POPUP_DIALOG)) {
         window_popup_dialog_confirm();
+    } else if (window_is(WINDOW_PLAIN_MESSAGE_DIALOG)) {
+        window_plain_message_dialog_accept();
+    } else if (window_is(WINDOW_NUMERIC_INPUT)) {
+        window_numeric_input_accept();
     }
 }
 
@@ -307,11 +437,11 @@ static void go_to_bookmark(int number)
     }
 }
 
-static void handle_bookmark(int number)
+static void handle_bookmark(int number, int with_modifier)
 {
     exit_military_command();
     if (window_is(WINDOW_CITY)) {
-        if (data.ctrl_down || data.shift_down) {
+        if (with_modifier) {
             map_bookmark_save(number);
         } else {
             go_to_bookmark(number);
@@ -319,47 +449,25 @@ static void handle_bookmark(int number)
     }
 }
 
-static void take_screenshot(void)
+static void take_screenshot(int full_city)
 {
-    graphics_save_screenshot();
+    graphics_save_screenshot(full_city);
 }
 
-void hotkey_func(int f_number)
+void hotkey_func(int f_number, int with_any_modifier, int with_ctrl)
 {
     switch (f_number) {
         case 1:
         case 2:
         case 3:
         case 4:
-            handle_bookmark(f_number - 1);
+            handle_bookmark(f_number - 1, with_any_modifier);
             break;
         case 5: system_center(); break;
         case 6: system_set_fullscreen(!setting_fullscreen()); break;
         case 7: system_resize(640, 480); break;
         case 8: system_resize(800, 600); break;
         case 9: system_resize(1024, 768); break;
-        case 12: take_screenshot(); break;
+        case 12: take_screenshot(with_ctrl); break;
     }
-}
-
-void hotkey_ctrl(int is_down)
-{
-    data.ctrl_down = is_down;
-}
-
-void hotkey_alt(int is_down)
-{
-    data.alt_down = is_down;
-}
-
-void hotkey_shift(int is_down)
-{
-    data.shift_down = is_down;
-}
-
-void hotkey_reset_state(void)
-{
-    data.ctrl_down = 0;
-    data.alt_down = 0;
-    data.shift_down = 0;
 }

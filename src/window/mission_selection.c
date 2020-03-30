@@ -1,5 +1,6 @@
 #include "mission_selection.h"
 
+#include "core/image_group.h"
 #include "game/mission.h"
 #include "graphics/graphics.h"
 #include "graphics/image.h"
@@ -37,7 +38,7 @@ static const struct {
 };
 
 static image_button image_button_start_mission = {
-    0, 0, 27, 27, IB_NORMAL, 92, 56, button_start, button_none, 1, 0, 1
+    0, 0, 27, 27, IB_NORMAL, GROUP_SIDEBAR_BUTTONS, 56, button_start, button_none, 1, 0, 1
 };
 
 static struct {
@@ -123,12 +124,20 @@ static void handle_mouse(const mouse *m)
         if (is_mouse_hit(m_dialog, x_peaceful, y_peaceful, 44)) {
             scenario_set_campaign_mission(game_mission_peaceful());
             data.choice = 1;
+            if (m_dialog->left.double_click) {
+                button_start(0, 0);
+                return;
+            }
             window_invalidate();
             sound_speech_play_file("wavs/fanfare_nu1.wav");
         }
         if (is_mouse_hit(m_dialog, x_military, y_military, 44)) {
             scenario_set_campaign_mission(game_mission_military());
             data.choice = 2;
+            if (m_dialog->left.double_click) {
+                button_start(0, 0);
+                return;
+            }
             window_invalidate();
             sound_speech_play_file("wavs/fanfare_nu5.wav");
         }

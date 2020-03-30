@@ -99,7 +99,6 @@ static void clear_scenario_data(void)
     game_state_init();
     game_animation_init();
     sound_city_init();
-    sound_music_reset();
     building_menu_enable_all();
     building_clear_all();
     building_storage_clear_all();
@@ -148,7 +147,6 @@ static void initialize_scenario_data(const uint8_t *scenario_name)
     map_tiles_update_all_aqueducts(0);
 
     map_natives_init();
-    map_routing_update_all();
 
     city_view_init();
 
@@ -156,9 +154,7 @@ static void initialize_scenario_data(const uint8_t *scenario_name)
     figure_create_herds();
     figure_create_flotsam();
 
-    map_routing_update_land();
-    map_routing_update_water();
-    map_routing_update_walls();
+    map_routing_update_all();
 
     scenario_map_init_entry_exit();
 
@@ -184,15 +180,16 @@ static void initialize_scenario_data(const uint8_t *scenario_name)
     scenario_demand_change_init();
     scenario_price_change_init();
     building_menu_update();
-    image_load_climate(scenario_property_climate());
+    image_load_climate(scenario_property_climate(), 0, 0);
     image_load_enemy(scenario_property_enemy());
 
     city_data_init_scenario();
+    game_state_unpause();
 }
 
 static int load_custom_scenario(const uint8_t *scenario_name, const char *scenario_file)
 {
-    if (!file_exists(scenario_file)) {
+    if (!file_exists(scenario_file, NOT_LOCALIZED)) {
         return 0;
     }
 
@@ -228,7 +225,6 @@ static void initialize_saved_game(void)
     city_message_init_problem_areas();
 
     sound_city_init();
-    sound_music_reset();
 
     game_undo_disable();
     game_state_reset_overlay();
@@ -236,7 +232,7 @@ static void initialize_saved_game(void)
     city_mission_tutorial_set_fire_message_shown(1);
     city_mission_tutorial_set_disease_message_shown(1);
 
-    image_load_climate(scenario_property_climate());
+    image_load_climate(scenario_property_climate(), 0, 0);
     image_load_enemy(scenario_property_enemy());
     city_military_determine_distant_battle_city();
     map_tiles_determine_gardens();
@@ -251,7 +247,7 @@ static int get_campaign_mission_offset(int mission_id)
     uint8_t offset_data[4];
     buffer buf;
     buffer_init(&buf, offset_data, 4);
-    if (!io_read_file_part_into_buffer(MISSION_PACK_FILE, offset_data, 4, 4 * mission_id)) {
+    if (!io_read_file_part_into_buffer(MISSION_PACK_FILE, NOT_LOCALIZED, offset_data, 4, 4 * mission_id)) {
         return 0;
     }
     return buffer_read_i32(&buf);
@@ -267,6 +263,11 @@ static int load_campaign_mission(int mission_id)
         return 0;
     }
 
+    if (mission_id == 0) {
+        scenario_set_player_name(setting_player_name());
+    } else {
+        scenario_restore_campaign_player_name();
+    }
     initialize_saved_game();
     city_data_init_campaign_mission();
     return 1;
@@ -281,6 +282,7 @@ static int start_scenario(const uint8_t *scenario_name, const char *scenario_fil
         if (!load_custom_scenario(scenario_name, scenario_file)) {
             return 0;
         }
+        scenario_set_player_name(setting_player_name());
     } else {
         if (!load_campaign_mission(mission)) {
             return 0;
@@ -347,10 +349,10 @@ int game_file_load_saved_game(const char *filename)
     if (!game_file_io_read_saved_game(filename, 0)) {
         return 0;
     }
-    sound_music_stop();
-    
     initialize_saved_game();
     building_storage_reset_building_ids();
+
+    sound_music_update(1);
     return 1;
 }
 
@@ -372,7 +374,7 @@ void game_file_write_mission_saved_game(void)
     } else if (rank > 11) {
         rank = 11;
     }
-    if (city_mission_should_save_start() && !file_exists(MISSION_SAVED_GAMES[rank])) {
+    if (city_mission_should_save_start() && !file_exists(MISSION_SAVED_GAMES[rank], NOT_LOCALIZED)) {
         game_file_io_write_saved_game(MISSION_SAVED_GAMES[rank]);
     }
 }

@@ -1,11 +1,8 @@
+#include "core/backtrace.h"
 #include "core/time.h"
 #include "game/file.h"
 #include "game/game.h"
 #include "game/settings.h"
-
-#if defined(__GNUC__) && !defined(__MINGW32__) && !defined(__OpenBSD__)
-#include <execinfo.h>
-#endif
 
 #ifdef _MSC_VER
 #include <direct.h>
@@ -22,19 +19,8 @@
 
 static void handler(int sig)
 {
-#if defined(__GNUC__) && !defined(__MINGW32__) && !defined(__OpenBSD__)
-    void *array[100];
-    size_t size;
-
-    // get void*'s for all entries on the stack
-    size = backtrace(array, 100);
-
-    // print out all the frames to stderr
-    fprintf(stderr, "Error: signal %d:\n", sig);
-    backtrace_symbols_fd(array, size, STDERR_FILENO);
-#else
-    fprintf(stderr, "Oops, crashed with signal %d :(\n", sig);
-#endif
+    fprintf(stderr, "Oops, crashed with signal %d :(", sig);
+    backtrace_print();
     exit(1);
 }
 
@@ -53,7 +39,6 @@ static int run_autopilot(const char *input_saved_game, const char *output_saved_
     printf("Running autopilot: %s --> %s in %d ticks\n", input_saved_game, output_saved_game, ticks_to_run);
     signal(SIGSEGV, handler);
 
-    chdir("data/sav");
     if (!game_pre_init()) {
         printf("Unable to run Game_preInit\n");
         return 1;
@@ -66,8 +51,11 @@ static int run_autopilot(const char *input_saved_game, const char *output_saved_
 
     if (!game_file_load_saved_game(input_saved_game)) {
         char wd[500];
-        getcwd(wd, 500);
-        printf("Unable to load saved game from %s\n", wd);
+        if (getcwd(wd, 500)) {
+            printf("Unable to load saved game from %s\n", wd);
+        } else {
+            printf("Unable to load saved game\n");
+        }
         return 3;
     }
     run_ticks(ticks_to_run);

@@ -1,5 +1,7 @@
 #include "new_career.h"
 
+#include "core/image_group.h"
+#include "core/lang.h"
 #include "core/string.h"
 #include "game/settings.h"
 #include "graphics/graphics.h"
@@ -12,14 +14,18 @@
 #include "input/keyboard.h"
 #include "scenario/property.h"
 #include "scenario/scenario.h"
-#include "window/main_menu.h"
+#include "widget/input_box.h"
 #include "window/mission_selection.h"
 
 static void start_mission(int param1, int param2);
+static void button_back(int param1, int param2);
 
-static image_button image_button_start_mission = {
-    0, 0, 27, 27, IB_NORMAL, 92, 56, start_mission, button_none, 1, 0, 1
+static image_button image_buttons[] = {
+    {0,   2, 31, 20, IB_NORMAL, GROUP_MESSAGE_ICON,     8, button_back,   button_none, 0, 0, 1},
+    {305, 0, 27, 27, IB_NORMAL, GROUP_SIDEBAR_BUTTONS, 56, start_mission, button_none, 1, 0, 1}
 };
+
+static input_box player_name_input = { 160, 208, 20, 2 };
 
 static uint8_t player_name[32];
 
@@ -27,8 +33,8 @@ static void init(void)
 {
     setting_clear_personal_savings();
     scenario_settings_init();
-    string_copy(scenario_player_name(), player_name, 32);
-    keyboard_start_capture(player_name, 32, 1, 280, FONT_NORMAL_WHITE);
+    string_copy(lang_get_string(9, 5), player_name, 32);
+    keyboard_start_capture(player_name, 32, 1, &player_name_input, FONT_NORMAL_WHITE);
 }
 
 static void draw_background(void)
@@ -45,35 +51,44 @@ static void draw_foreground(void)
     outer_panel_draw(128, 160, 24, 8);
     lang_text_draw_centered(31, 0, 128, 172, 384, FONT_LARGE_BLACK);
     lang_text_draw(13, 5, 352, 256, FONT_NORMAL_BLACK);
-    inner_panel_draw(160, 208, 20, 2);
+    lang_text_draw(12, 0, 200, 256, FONT_NORMAL_BLACK);
+    input_box_draw(&player_name_input);
     text_capture_cursor(keyboard_cursor_position(), keyboard_offset_start(), keyboard_offset_end());
     text_draw(player_name, 176, 216, FONT_NORMAL_WHITE, 0);
     text_draw_cursor(176, 217, keyboard_is_insert());
-    
-    image_buttons_draw(464, 249, &image_button_start_mission, 1);
+
+    image_buttons_draw(159, 249, image_buttons, 2);
 
     graphics_reset_dialog();
 }
 
 static void handle_mouse(const mouse *m)
 {
-    if (m->right.went_up) {
-        keyboard_stop_capture();
-        window_main_menu_show();
-    }
-
-    if (image_buttons_handle_mouse(mouse_in_dialog(m), 464, 249, &image_button_start_mission, 1, 0)) {
+    const mouse *m_dialog = mouse_in_dialog(m);
+    if (input_box_handle_mouse(m_dialog, &player_name_input) ||
+        image_buttons_handle_mouse(m_dialog, 159, 249, image_buttons, 2, 0)) {
         return;
     }
     if (keyboard_input_is_accepted()) {
         start_mission(0, 0);
+        return;
     }
+    if (m->right.went_up || (m->is_touch && m->left.double_click)) {
+        keyboard_stop_capture();
+        window_go_back();
+    }
+}
+
+static void button_back(int param1, int param2)
+{
+    keyboard_stop_capture();
+    window_go_back();
 }
 
 static void start_mission(int param1, int param2)
 {
     keyboard_stop_capture();
-    scenario_set_player_name(player_name);
+    setting_set_player_name(player_name);
     window_mission_selection_show();
 }
 

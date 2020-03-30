@@ -6,7 +6,8 @@
 #include "graphics/lang_text.h"
 #include "graphics/panel.h"
 #include "graphics/window.h"
-#include "window/advisor/labor.h"
+
+#define MIN_DIALOG_WIDTH 320
 
 static void button_set_priority(int new_priority, int param2);
 
@@ -17,16 +18,16 @@ static struct {
 } data;
 
 static generic_button priority_buttons[] = {
-    {180, 256, 460, 281, GB_IMMEDIATE, button_set_priority, button_none, 0, 0}, // no prio
-    {178, 221, 205, 248, GB_IMMEDIATE, button_set_priority, button_none, 1, 0},
-    {210, 221, 237, 248, GB_IMMEDIATE, button_set_priority, button_none, 2, 0},
-    {242, 221, 269, 248, GB_IMMEDIATE, button_set_priority, button_none, 3, 0},
-    {274, 221, 301, 248, GB_IMMEDIATE, button_set_priority, button_none, 4, 0},
-    {306, 221, 333, 248, GB_IMMEDIATE, button_set_priority, button_none, 5, 0},
-    {338, 221, 365, 248, GB_IMMEDIATE, button_set_priority, button_none, 6, 0},
-    {370, 221, 397, 248, GB_IMMEDIATE, button_set_priority, button_none, 7, 0},
-    {402, 221, 429, 248, GB_IMMEDIATE, button_set_priority, button_none, 8, 0},
-    {434, 221, 461, 248, GB_IMMEDIATE, button_set_priority, button_none, 9, 0},
+    {180, 256, 280, 25, button_set_priority, button_none, 0, 0}, // no prio
+    {178, 221, 27, 27, button_set_priority, button_none, 1, 0},
+    {210, 221, 27, 27, button_set_priority, button_none, 2, 0},
+    {242, 221, 27, 27, button_set_priority, button_none, 3, 0},
+    {274, 221, 27, 27, button_set_priority, button_none, 4, 0},
+    {306, 221, 27, 27, button_set_priority, button_none, 5, 0},
+    {338, 221, 27, 27, button_set_priority, button_none, 6, 0},
+    {370, 221, 27, 27, button_set_priority, button_none, 7, 0},
+    {402, 221, 27, 27, button_set_priority, button_none, 8, 0},
+    {434, 221, 27, 27, button_set_priority, button_none, 9, 0},
 };
 
 static void init(int category)
@@ -35,13 +36,28 @@ static void init(int category)
     data.max_items = city_labor_max_selectable_priority(category);
 }
 
+static int get_dialog_width(void)
+{
+    int title_width = lang_text_get_width(50, 25, FONT_LARGE_BLACK);
+    int rclick_width = lang_text_get_width(13, 3, FONT_NORMAL_BLACK);
+    int dialog_width = 16 + (title_width > rclick_width ? title_width : rclick_width);
+    if (dialog_width < MIN_DIALOG_WIDTH) dialog_width = MIN_DIALOG_WIDTH;
+    if (dialog_width % 16 != 0) {
+        // make sure the width is a multiple of 16
+        dialog_width += 16 - dialog_width % 16;
+    }
+    return dialog_width;
+}
+
 static void draw_background(void)
 {
+    window_draw_underlying_window();
+
     graphics_in_dialog();
 
-    window_advisor_labor_draw_dialog_background();
-
-    outer_panel_draw(160, 176, 20, 9);
+    int dialog_width = get_dialog_width();
+    int dialog_x = 160 - (dialog_width - MIN_DIALOG_WIDTH) / 2;
+    outer_panel_draw(dialog_x, 176, dialog_width / 16, 9);
     lang_text_draw_centered(50, 25, 160, 185, 320, FONT_LARGE_BLACK);
     for (int i = 0; i < 9; i++) {
         graphics_draw_rect(178 + 32 * i, 221, 27, 27, COLOR_BLACK);
@@ -52,8 +68,8 @@ static void draw_background(void)
     }
 
     graphics_draw_rect(180, 256, 280, 25, COLOR_BLACK);
-    lang_text_draw_centered(50, 26, 180, 263, 280, FONT_NORMAL_BLACK);
-    lang_text_draw_centered(13, 3, 160, 296, 320, FONT_NORMAL_BLACK);
+    lang_text_draw_centered(50, 26, 148, 263, 344, FONT_NORMAL_BLACK);
+    lang_text_draw_centered(13, 3, 128, 296, 384, FONT_NORMAL_BLACK);
     graphics_reset_dialog();
 }
 
@@ -80,17 +96,18 @@ static void draw_foreground(void)
 
 static void handle_mouse(const mouse *m)
 {
-    if (m->right.went_up) {
-        window_advisors_show();
-    } else {
-        generic_buttons_handle_mouse(mouse_in_dialog(m), 0, 0, priority_buttons, 1 + data.max_items, &data.focus_button_id);
+    if (generic_buttons_handle_mouse(mouse_in_dialog(m), 0, 0, priority_buttons, 1 + data.max_items, &data.focus_button_id)) {
+        return;
+    }
+    if (m->right.went_up || (m->is_touch && m->left.double_click)) {
+        window_go_back();
     }
 }
 
 static void button_set_priority(int new_priority, int param2)
 {
     city_labor_set_priority(data.category, new_priority);
-    window_advisors_show();
+    window_go_back();
 }
 
 static void get_tooltip(tooltip_context *c)

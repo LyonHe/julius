@@ -8,7 +8,6 @@
 #include "graphics/panel.h"
 #include "graphics/text.h"
 #include "graphics/window.h"
-#include "window/city.h"
 
 static void button_ok(int param1, int param2);
 static void button_cancel(int param1, int param2);
@@ -17,8 +16,8 @@ static void arrow_button_game(int is_down, int param2);
 static void arrow_button_scroll(int is_down, int param2);
 
 static generic_button buttons[] = {
-    {144, 232, 336, 252, GB_IMMEDIATE, button_ok, button_none, 1, 0},
-    {144, 262, 336, 282, GB_IMMEDIATE, button_cancel, button_none, 1, 0},
+    {144, 232, 192, 20, button_ok, button_none, 1, 0},
+    {144, 262, 192, 20, button_cancel, button_none, 1, 0},
 };
 
 static arrow_button arrow_buttons[] = {
@@ -28,16 +27,20 @@ static arrow_button arrow_buttons[] = {
     {136, 136, 15, 24, arrow_button_scroll, 0, 0},
 };
 
-static int original_game_speed;
-static int original_scroll_speed;
+static struct {
+    int focus_button_id;
+    void (*close_callback)(void);
 
-static int focus_button_id;
+    int original_game_speed;
+    int original_scroll_speed;
+} data;
 
-static void init(void)
+static void init(void (*close_callback)(void))
 {
-    original_game_speed = setting_game_speed();
-    original_scroll_speed = setting_scroll_speed();
-    focus_button_id = 0;
+    data.focus_button_id = 0;
+    data.close_callback = close_callback;
+    data.original_game_speed = setting_game_speed();
+    data.original_scroll_speed = setting_scroll_speed();
 }
 
 static void draw_foreground(void)
@@ -46,8 +49,8 @@ static void draw_foreground(void)
 
     outer_panel_draw(80, 80, 20, 14);
     // ok/cancel labels
-    label_draw(144, 232, 12, focus_button_id == 1 ? 1 : 2);
-    label_draw(144, 262, 12, focus_button_id == 2 ? 1 : 2);
+    label_draw(144, 232, 12, data.focus_button_id == 1 ? 1 : 2);
+    label_draw(144, 262, 12, data.focus_button_id == 2 ? 1 : 2);
 
     // title
     lang_text_draw_centered(45, 0, 96, 92, 288, FONT_LARGE_BLACK);
@@ -67,26 +70,25 @@ static void draw_foreground(void)
 
 static void handle_mouse(const mouse *m)
 {
-    if (m->right.went_up) {
-        // cancel dialog
-        window_city_show();
-    } else {
-        const mouse *m_dialog = mouse_in_dialog(m);
-        if (!generic_buttons_handle_mouse(m_dialog, 0, 0, buttons, 2, &focus_button_id)) {
-            arrow_buttons_handle_mouse(m_dialog, 160, 40, arrow_buttons, 4);
-        }
+    const mouse *m_dialog = mouse_in_dialog(m);
+    if (generic_buttons_handle_mouse(m_dialog, 0, 0, buttons, 2, &data.focus_button_id) ||
+        arrow_buttons_handle_mouse(m_dialog, 160, 40, arrow_buttons, 4)) {
+        return;
+    }
+    if (m->right.went_up || (m->is_touch && m->left.double_click)) {
+        data.close_callback();
     }
 }
 
 static void button_ok(int param1, int param2)
 {
-    window_city_show();
+    data.close_callback();
 }
 
 static void button_cancel(int param1, int param2)
 {
-    setting_reset_speeds(original_game_speed, original_scroll_speed);
-    window_city_show();
+    setting_reset_speeds(data.original_game_speed, data.original_scroll_speed);
+    data.close_callback();
 }
 
 static void arrow_button_game(int is_down, int param2)
@@ -107,14 +109,14 @@ static void arrow_button_scroll(int is_down, int param2)
     }
 }
 
-void window_speed_options_show(void)
+void window_speed_options_show(void (*close_callback)(void))
 {
     window_type window = {
         WINDOW_SPEED_OPTIONS,
-        0,
+        window_draw_underlying_window,
         draw_foreground,
         handle_mouse
     };
-    init();
+    init(close_callback);
     window_show(&window);
 }

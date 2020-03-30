@@ -8,9 +8,6 @@
 #include "game/animation.h"
 #include "scenario/empire.h"
 
-#define HEADER_SIZE 1280
-#define DATA_SIZE 12800
-
 #define MAX_OBJECTS 200
 
 typedef struct {
@@ -133,8 +130,8 @@ void empire_object_init_cities(void)
             city->buys_resource[resource] = 0;
             if (city->type == EMPIRE_CITY_DISTANT_ROMAN
                 || city->type == EMPIRE_CITY_DISTANT_FOREIGN
-                || city->type== EMPIRE_CITY_VULNERABLE_ROMAN
-                || city->type== EMPIRE_CITY_FUTURE_ROMAN) {
+                || city->type == EMPIRE_CITY_VULNERABLE_ROMAN
+                || city->type == EMPIRE_CITY_FUTURE_ROMAN) {
                 continue;
             }
             if (empire_object_city_sells_resource(i, resource)) {
@@ -160,7 +157,6 @@ void empire_object_init_cities(void)
     }
 }
 
-
 int empire_object_init_distant_battle_travel_months(int object_type)
 {
     int month = 0;
@@ -176,6 +172,19 @@ int empire_object_init_distant_battle_travel_months(int object_type)
 const empire_object *empire_object_get(int object_id)
 {
     return &objects[object_id].obj;
+}
+
+const empire_object *empire_object_get_our_city(void)
+{
+    for (int i = 0; i < MAX_OBJECTS; i++) {
+        if (objects[i].in_use) {
+            const empire_object *obj = &objects[i].obj;
+            if (obj->type == EMPIRE_OBJECT_CITY && objects[i].city_type == EMPIRE_CITY_OURS) {
+                return obj;
+            }
+        }
+    }
+    return 0;
 }
 
 void empire_object_foreach(void (*callback)(const empire_object *))

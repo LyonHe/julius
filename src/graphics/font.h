@@ -22,6 +22,7 @@ typedef enum {
 typedef struct {
     font_t font;
     int image_offset;
+    int multibyte_image_offset;
     int space_width;
     int space_width_draw;
     int letter_spacing;
@@ -52,9 +53,12 @@ void font_set_encoding(encoding_type encoding);
 const font_definition *font_definition_for(font_t font);
 
 /**
- * Gets the image ID offset for the specified character
- * @return Image ID offset
+ * Gets the letter ID for the specified character and font
+ * @param def Font definition
+ * @param str Character string
+ * @param num_bytes Out: number of bytes consumed by letter
+ * @return Letter ID to feed into image_letter(), or -1 if c is no letter
  */
-int font_image_for(uint8_t c);
+int font_letter_id(const font_definition *def, const uint8_t *str, int *num_bytes);
 
 #endif // GRAPHICS_FONT_H

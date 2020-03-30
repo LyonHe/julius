@@ -14,28 +14,28 @@ static void button_menu_item(int index, int param2);
 static void button_submenu_item(int index, int param2);
 
 static generic_button menu_buttons[] = {
-    {0, 0, 160, 24, GB_IMMEDIATE, button_menu_item, button_none, 0, 0},
-    {0, 24, 160, 48, GB_IMMEDIATE, button_menu_item, button_none, 1, 0},
-    {0, 48, 160, 72, GB_IMMEDIATE, button_menu_item, button_none, 2, 0},
-    {0, 72, 160, 96, GB_IMMEDIATE, button_menu_item, button_none, 3, 0},
-    {0, 96, 160, 120, GB_IMMEDIATE, button_menu_item, button_none, 4, 0},
-    {0, 120, 160, 144, GB_IMMEDIATE, button_menu_item, button_none, 5, 0},
-    {0, 144, 160, 168, GB_IMMEDIATE, button_menu_item, button_none, 6, 0},
-    {0, 168, 160, 192, GB_IMMEDIATE, button_menu_item, button_none, 7, 0},
-    {0, 192, 160, 216, GB_IMMEDIATE, button_menu_item, button_none, 8, 0},
-    {0, 216, 160, 240, GB_IMMEDIATE, button_menu_item, button_none, 9, 0},
+    {0, 0, 160, 24, button_menu_item, button_none, 0, 0},
+    {0, 24, 160, 24, button_menu_item, button_none, 1, 0},
+    {0, 48, 160, 24, button_menu_item, button_none, 2, 0},
+    {0, 72, 160, 24, button_menu_item, button_none, 3, 0},
+    {0, 96, 160, 24, button_menu_item, button_none, 4, 0},
+    {0, 120, 160, 24, button_menu_item, button_none, 5, 0},
+    {0, 144, 160, 24, button_menu_item, button_none, 6, 0},
+    {0, 168, 160, 24, button_menu_item, button_none, 7, 0},
+    {0, 192, 160, 24, button_menu_item, button_none, 8, 0},
+    {0, 216, 160, 24, button_menu_item, button_none, 9, 0},
 };
 static generic_button submenu_buttons[] = {
-    {0, 0, 160, 24, GB_IMMEDIATE, button_submenu_item, button_none, 0, 0},
-    {0, 24, 160, 48, GB_IMMEDIATE, button_submenu_item, button_none, 1, 0},
-    {0, 48, 160, 72, GB_IMMEDIATE, button_submenu_item, button_none, 2, 0},
-    {0, 72, 160, 96, GB_IMMEDIATE, button_submenu_item, button_none, 3, 0},
-    {0, 96, 160, 120, GB_IMMEDIATE, button_submenu_item, button_none, 4, 0},
-    {0, 120, 160, 144, GB_IMMEDIATE, button_submenu_item, button_none, 5, 0},
-    {0, 144, 160, 168, GB_IMMEDIATE, button_submenu_item, button_none, 6, 0},
-    {0, 168, 160, 192, GB_IMMEDIATE, button_submenu_item, button_none, 7, 0},
-    {0, 192, 160, 216, GB_IMMEDIATE, button_submenu_item, button_none, 8, 0},
-    {0, 216, 160, 240, GB_IMMEDIATE, button_submenu_item, button_none, 9, 0},
+    {0, 0, 160, 24, button_submenu_item, button_none, 0, 0},
+    {0, 24, 160, 24, button_submenu_item, button_none, 1, 0},
+    {0, 48, 160, 24, button_submenu_item, button_none, 2, 0},
+    {0, 72, 160, 24, button_submenu_item, button_none, 3, 0},
+    {0, 96, 160, 24, button_submenu_item, button_none, 4, 0},
+    {0, 120, 160, 24, button_submenu_item, button_none, 5, 0},
+    {0, 144, 160, 24, button_submenu_item, button_none, 6, 0},
+    {0, 168, 160, 24, button_submenu_item, button_none, 7, 0},
+    {0, 192, 160, 24, button_submenu_item, button_none, 8, 0},
+    {0, 216, 160, 24, button_submenu_item, button_none, 9, 0},
 };
 
 static const int MENU_ID_TO_OVERLAY[8] = {OVERLAY_NONE, OVERLAY_WATER, 1, 3, 5, 6, 7, OVERLAY_RELIGION};
@@ -58,6 +58,8 @@ static struct {
 
     int menu_focus_button_id;
     int submenu_focus_button_id;
+
+    int keep_submenu_open;
 } data;
 
 static void init(void)
@@ -105,35 +107,54 @@ static int count_submenu_items(int submenu_id)
     return total;
 }
 
-static void handle_submenu(void)
+static void open_submenu(int index, int keep_open)
+{
+    data.keep_submenu_open = keep_open;
+    data.selected_menu = index;
+    data.selected_submenu = MENU_ID_TO_SUBMENU_ID[index];
+    data.num_submenu_items = count_submenu_items(data.selected_submenu);
+}
+
+static void close_submenu(void)
+{
+    data.keep_submenu_open = 0;
+    data.selected_menu = 0;
+    data.selected_submenu = 0;
+    data.num_submenu_items = 0;
+}
+
+static void handle_submenu_focus(void)
 {
     if (data.menu_focus_button_id || data.submenu_focus_button_id) {
         data.submenu_focus_time = time_get_millis();
         if (data.menu_focus_button_id) {
-            data.selected_menu = data.menu_focus_button_id - 1;
-            data.selected_submenu = MENU_ID_TO_SUBMENU_ID[data.selected_menu];
-            data.num_submenu_items = count_submenu_items(data.selected_submenu);
+            open_submenu(data.menu_focus_button_id - 1, 0);
         }
     } else if (time_get_millis() - data.submenu_focus_time > 500) {
-        data.selected_submenu = 0;
-        data.num_submenu_items = 0;
+        close_submenu();
     }
 }
 
 static void handle_mouse(const mouse *m)
 {
-    if (m->right.went_down) {
-        window_city_show();
-        return;
-    }
     int x_offset = get_sidebar_x_offset();
-    generic_buttons_handle_mouse(m, x_offset - 170, 72, menu_buttons, 8, &data.menu_focus_button_id);
+    int handled = 0;
+    handled |= generic_buttons_handle_mouse(m, x_offset - 170, 72, menu_buttons, 8, &data.menu_focus_button_id);
 
-    handle_submenu();
+    if (!data.keep_submenu_open) {
+        handle_submenu_focus();
+    }
     if (data.selected_submenu) {
-        generic_buttons_handle_mouse(
+        handled |= generic_buttons_handle_mouse(
             m, x_offset - 348, 72 + 24 * data.selected_menu,
             submenu_buttons, data.num_submenu_items, &data.submenu_focus_button_id);
+    }
+    if (!handled && (m->right.went_up || (m->is_touch && m->left.double_click))) {
+        if (data.keep_submenu_open) {
+            close_submenu();
+        } else {
+            window_city_show();
+        }
     }
 }
 
@@ -141,8 +162,15 @@ static void button_menu_item(int index, int param2)
 {
     if (MENU_ID_TO_SUBMENU_ID[index] == 0) {
         game_state_set_overlay(MENU_ID_TO_OVERLAY[index]);
+        close_submenu();
+        window_city_show();
+    } else {
+        if (data.keep_submenu_open && data.selected_submenu == MENU_ID_TO_SUBMENU_ID[index]) {
+            close_submenu();
+        } else {
+            open_submenu(index, 1);
+        }
     }
-    window_city_show();
 }
 
 static void button_submenu_item(int index, int param2)
@@ -151,6 +179,7 @@ static void button_submenu_item(int index, int param2)
     if (overlay) {
         game_state_set_overlay(overlay);
     }
+    close_submenu();
     window_city_show();
 }
 

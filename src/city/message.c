@@ -114,7 +114,7 @@ static int has_video(int text_id)
     }
     char video_file[FILE_NAME_MAX];
     encoding_to_utf8(msg->video.text, video_file, FILE_NAME_MAX, 0);
-    return file_exists(video_file);
+    return file_exists(video_file, MAY_BE_LOCALIZED);
 }
 
 static void enqueue_message(int sequence)
@@ -320,10 +320,13 @@ message_advisor city_message_get_advisor(city_message_type message_type)
         case MESSAGE_REQUEST_REFUSED:
         case MESSAGE_REQUEST_REFUSED_OVERDUE:
         case MESSAGE_REQUEST_RECEIVED_LATE:
+        case MESSAGE_REQUEST_CAN_COMPLY:
             return MESSAGE_ADVISOR_IMPERIAL;
 
         case MESSAGE_UNEMPLOYMENT:
         case MESSAGE_WORKERS_NEEDED:
+        case MESSAGE_ROME_LOWERS_WAGES:
+        case MESSAGE_ROME_RAISES_WAGES:
             return MESSAGE_ADVISOR_LABOR;
 
         case MESSAGE_NOT_ENOUGH_FOOD:
@@ -417,6 +420,24 @@ int city_message_problem_area_count(void)
     return data.problem_count;
 }
 
+static int has_problem_area(const city_message *msg, lang_message_type lang_msg_type)
+{
+    if (lang_msg_type == MESSAGE_TYPE_DISASTER) {
+        return 1;
+    }
+    if (lang_msg_type == MESSAGE_TYPE_INVASION) {
+        if (formation_grid_offset_for_invasion(msg->param1)) {
+            return 1;
+        }
+        // Formations have not been updated yet because the invasion just started.
+        // Invasions always start at the end of the month: return true when we're in
+        // the next month
+        return (msg->month + 1) % 12 == game_time_month() &&
+            msg->year + (msg->month + 1) / 12 == game_time_year();
+    }
+    return 0;
+}
+
 int city_message_next_problem_area_grid_offset(void)
 {
     time_millis now = time_get_millis();
@@ -432,10 +453,8 @@ int city_message_next_problem_area_grid_offset(void)
         if (msg->message_type && msg->year >= game_time_year() - 1) {
             const lang_message *lang_msg = lang_get_message(city_message_get_text_id(msg->message_type));
             lang_message_type lang_msg_type = lang_msg->message_type;
-            if (lang_msg_type == MESSAGE_TYPE_DISASTER || lang_msg_type == MESSAGE_TYPE_INVASION) {
-                if (lang_msg_type != MESSAGE_TYPE_INVASION || formation_grid_offset_for_invasion(msg->param1) > 0) {
-                    data.problem_count++;
-                }
+            if (has_problem_area(msg, lang_msg_type)) {
+                data.problem_count++;
             }
         }
     }
@@ -453,17 +472,18 @@ int city_message_next_problem_area_grid_offset(void)
         if (msg->message_type && msg->year >= current_year - 1) {
             int text_id = city_message_get_text_id(msg->message_type);
             lang_message_type lang_msg_type = lang_get_message(text_id)->message_type;
-            if (lang_msg_type == MESSAGE_TYPE_DISASTER || lang_msg_type == MESSAGE_TYPE_INVASION) {
-                if (lang_msg_type != MESSAGE_TYPE_INVASION || formation_grid_offset_for_invasion(msg->param1) > 0) {
-                    index++;
-                    if (data.problem_index < index) {
-                        data.problem_index++;
-                        int grid_offset = msg->param2;
-                        if (lang_msg_type == MESSAGE_TYPE_INVASION) {
-                            grid_offset = formation_grid_offset_for_invasion(msg->param1);
+            if (has_problem_area(msg, lang_msg_type)) {
+                index++;
+                if (data.problem_index < index) {
+                    data.problem_index++;
+                    int grid_offset = grid_offset = msg->param2;
+                    if (lang_msg_type == MESSAGE_TYPE_INVASION) {
+                        int formation_grid_offset = formation_grid_offset_for_invasion(msg->param1);
+                        if (formation_grid_offset) {
+                            grid_offset = formation_grid_offset;
                         }
-                        return grid_offset;
                     }
+                    return grid_offset;
                 }
             }
         }

@@ -25,7 +25,7 @@ static const char FIGURE_SOUNDS[32][20][SOUND_FILENAME_MAX] = {
         "vigils_relig1.wav", "vigils_great1.wav", "vigils_great2.wav", "vigils_exact1.wav",
         "vigils_exact2.wav", "vigils_exact3.wav", "vigils_exact4.wav", "vigils_exact5.wav",
         "vigils_exact6.wav", "vigils_exact7.wav", "vigils_exact8.wav", "vigils_exact9.wav",
-        "vigils_exact0.wav", "vigils_free1.wav", "vigils_free2.wav", "vigils_free3.wav"
+        "vigils_exact10.wav", "vigils_free1.wav", "vigils_free2.wav", "vigils_free3.wav"
     },
     { // 1
         "wallguard_starv1.wav", "wallguard_nojob1.wav", "wallguard_needjob1.wav", "wallguard_nofun1.wav",
@@ -249,7 +249,7 @@ static const char FIGURE_SOUNDS[32][20][SOUND_FILENAME_MAX] = {
 static const int FIGURE_TYPE_TO_SOUND_TYPE[] = {
     -1, 24, 23, 21, 5, 19, -1, 3, 2, 5, // 0-9
     0, 1, 1, 1, -1, 14, 15, 16, 17, 6, // 10-19
-    7, -1, 20, 20, 20, -1, 4, 8, 10, 9, // 20-29
+    7, 6, 20, 20, 20, -1, 4, 8, 10, 9, // 20-29
     9, 13, 11, 12, 12, 19, -1, -1, 5, 4, // 30-39
     18, -1, 1, 25, 25, 25, 25, 25, 25, 25, // 40-49
     25, 25, 25, 25, 25, 25, 25, 25, -1, -1, // 50-59
@@ -376,7 +376,12 @@ static int prefect_phrase(figure *f)
     } else if (f->action_state == FIGURE_ACTION_150_ATTACK) {
         return 13 + f->phrase_sequence_exact;
     } else if (f->min_max_seen >= 50) {
-        return 7;
+        // alternate between "no sign of crime around here" and the regular city phrases
+        if (f->phrase_sequence_exact % 2) {
+            return 7;
+        } else {
+            return 0;
+        }
     } else if (f->min_max_seen >= 10) {
         return 8;
     } else {
@@ -552,6 +557,11 @@ static int phrase_based_on_figure_state(figure *f)
             return docker_phrase(f);
         case FIGURE_TRADE_CARAVAN:
             return trade_caravan_phrase(f);
+        case FIGURE_TRADE_CARAVAN_DONKEY:
+            while (f->type == FIGURE_TRADE_CARAVAN_DONKEY && f->leading_figure_id) {
+                f = figure_get(f->leading_figure_id);
+            }
+            return f->type == FIGURE_TRADE_CARAVAN ? trade_caravan_phrase(f) : 0;
         case FIGURE_TRADE_SHIP:
             return trade_ship_phrase(f);
     }

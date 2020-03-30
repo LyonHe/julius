@@ -197,6 +197,10 @@ void formation_legions_dispatch_to_distant_battle(void)
             num_legions++;
         }
     }
+    // Protect from overflow -> only stores 1 unsigned byte
+    if (roman_strength > 255) {
+        roman_strength = 255;
+    }
     if (num_legions > 0) {
         city_military_dispatch_to_distant_battle(roman_strength);
     }
@@ -270,7 +274,7 @@ int formation_legion_curse(void)
 {
     formation *best_legion = 0;
     int best_legion_weight = 0;
-    for (int i = 1; i <= 6; i++) { // BUG assumes no legions beyond index 6
+    for (int i = 1; i < MAX_FORMATIONS; i++) {
         formation *m = formation_get(i);
         if (m->in_use == 1 && m->is_legion) {
             int weight = m->num_figures;
@@ -286,7 +290,7 @@ int formation_legion_curse(void)
     if (!best_legion) {
         return 0;
     }
-    for (int i = 0; i < MAX_FORMATION_FIGURES - 1; i++) { // BUG: last figure not cursed
+    for (int i = 0; i < MAX_FORMATION_FIGURES; i++) {
         if (best_legion->figures[i] > 0) {
             figure_get(best_legion->figures[i])->action_state = FIGURE_ACTION_82_SOLDIER_RETURNING_TO_BARRACKS;
         }
@@ -323,7 +327,7 @@ int formation_legion_at_building(int grid_offset)
 
 void formation_legion_update(void)
 {
-    for (int i = 1; i <= MAX_LEGIONS; i++) {
+    for (int i = 1; i <= formation_get_max_legions(); i++) {
         formation *m = formation_get(i);
         if (m->in_use != 1 || !m->is_legion) {
             continue;

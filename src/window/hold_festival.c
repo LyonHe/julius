@@ -4,6 +4,7 @@
 #include "city/festival.h"
 #include "city/finance.h"
 #include "city/gods.h"
+#include "core/image_group.h"
 #include "game/resource.h"
 #include "graphics/generic_button.h"
 #include "graphics/graphics.h"
@@ -22,21 +23,21 @@ static void button_close(int param1, int param2);
 static void button_hold_festival(int param1, int param2);
 
 static image_button image_buttons_bottom[] = {
-    {58, 316, 27, 27, IB_NORMAL, 134, 0, button_help, button_none, 0, 0, 1},
-    {558, 319, 24, 24, IB_NORMAL, 134, 4, button_close, button_none, 0, 0, 1},
-    {358, 317, 34, 34, IB_NORMAL, 96, 0, button_hold_festival, button_none, 1, 0, 1},
-    {400, 317, 34, 34, IB_NORMAL, 96, 4, button_close, button_none, 0, 0, 1},
+    {58, 316, 27, 27, IB_NORMAL, GROUP_CONTEXT_ICONS, 0, button_help, button_none, 0, 0, 1},
+    {558, 319, 24, 24, IB_NORMAL, GROUP_CONTEXT_ICONS, 4, button_close, button_none, 0, 0, 1},
+    {358, 317, 39, 26, IB_NORMAL, GROUP_OK_CANCEL_SCROLL_BUTTONS, 0, button_hold_festival, button_none, 1, 0, 1},
+    {400, 317, 39, 26, IB_NORMAL, GROUP_OK_CANCEL_SCROLL_BUTTONS, 4, button_close, button_none, 0, 0, 1},
 };
 
 static generic_button buttons_gods_size[] = {
-    {70, 96, 150, 186, GB_IMMEDIATE, button_god, button_none, 0, 0},
-    {170, 96, 250, 186, GB_IMMEDIATE, button_god, button_none, 1, 0},
-    {270, 96, 350, 186, GB_IMMEDIATE, button_god, button_none, 2, 0},
-    {370, 96, 450, 186, GB_IMMEDIATE, button_god, button_none, 3, 0},
-    {470, 96, 550, 186, GB_IMMEDIATE, button_god, button_none, 4, 0},
-    {102, 216, 532, 242, GB_IMMEDIATE, button_size, button_none, 1, 0},
-    {102, 246, 532, 272, GB_IMMEDIATE, button_size, button_none, 2, 0},
-    {102, 276, 532, 302, GB_IMMEDIATE, button_size, button_none, 3, 0},
+    {70, 96, 80, 90, button_god, button_none, 0, 0},
+    {170, 96, 80, 90, button_god, button_none, 1, 0},
+    {270, 96, 80, 90, button_god, button_none, 2, 0},
+    {370, 96, 80, 90, button_god, button_none, 3, 0},
+    {470, 96, 80, 90, button_god, button_none, 4, 0},
+    {102, 216, 430, 26, button_size, button_none, 1, 0},
+    {102, 246, 430, 26, button_size, button_none, 2, 0},
+    {102, 276, 430, 26, button_size, button_none, 3, 0},
 };
 
 static int focus_button_id;
@@ -103,16 +104,15 @@ static void draw_foreground(void)
 
 static void handle_mouse(const mouse *m)
 {
-    if (m->right.went_up) {
-        window_advisors_show();
-        return;
-    }
-
     const mouse *m_dialog = mouse_in_dialog(m);
-    image_buttons_handle_mouse(m_dialog, 0, 0, image_buttons_bottom, 4, &focus_image_button_id);
-    generic_buttons_handle_mouse(m_dialog, 0, 0, buttons_gods_size, 8, &focus_button_id);
+    int handled = 0;
+    handled |= image_buttons_handle_mouse(m_dialog, 0, 0, image_buttons_bottom, 4, &focus_image_button_id);
+    handled |= generic_buttons_handle_mouse(m_dialog, 0, 0, buttons_gods_size, 8, &focus_button_id);
     if (focus_image_button_id) {
         focus_button_id = 0;
+    }
+    if (!handled && (m->right.went_up || (m->is_touch && m->left.double_click))) {
+        window_advisors_show();
     }
 }
 
@@ -133,7 +133,7 @@ static void button_size(int size, int param2)
 
 static void button_help(int param1, int param2)
 {
-    window_message_dialog_show(MESSAGE_DIALOG_ENTERTAINMENT_ADVISOR, 1);
+    window_message_dialog_show(MESSAGE_DIALOG_ENTERTAINMENT_ADVISOR, 0);
 }
 
 static void button_close(int param1, int param2)

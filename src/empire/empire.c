@@ -17,8 +17,7 @@ enum {
     EMPIRE_WIDTH = 2000,
     EMPIRE_HEIGHT = 1000,
     EMPIRE_HEADER_SIZE = 1280,
-    EMPIRE_DATA_SIZE = 12800,
-    SCROLL_AMOUNT = 20
+    EMPIRE_DATA_SIZE = 12800
 };
 
 static struct {
@@ -37,7 +36,7 @@ void empire_load(int is_custom_scenario, int empire_id)
     const char *filename = is_custom_scenario ? "c32.emp" : "c3.emp";
     
     // read header with scroll positions
-    if (!io_read_file_part_into_buffer(filename, raw_data, 4, 32 * empire_id)) {
+    if (!io_read_file_part_into_buffer(filename, NOT_LOCALIZED, raw_data, 4, 32 * empire_id)) {
         memset(raw_data, 0, 4);
     }
     buffer buf;
@@ -47,13 +46,41 @@ void empire_load(int is_custom_scenario, int empire_id)
 
     // read data section with objects
     int offset = EMPIRE_HEADER_SIZE + EMPIRE_DATA_SIZE * empire_id;
-    if (io_read_file_part_into_buffer(filename, raw_data, EMPIRE_DATA_SIZE, offset) != EMPIRE_DATA_SIZE) {
+    if (io_read_file_part_into_buffer(filename, NOT_LOCALIZED, raw_data, EMPIRE_DATA_SIZE, offset) != EMPIRE_DATA_SIZE) {
         // load empty empire when loading fails
         log_error("Unable to load empire data from file", filename, 0);
         memset(raw_data, 0, EMPIRE_DATA_SIZE);
     }
     buffer_init(&buf, raw_data, EMPIRE_DATA_SIZE);
     empire_object_load(&buf);
+}
+
+static void check_scroll_boundaries(void)
+{
+    int max_x = EMPIRE_WIDTH - data.viewport_width;
+    int max_y = EMPIRE_HEIGHT - data.viewport_height;
+
+    data.scroll_x = calc_bound(data.scroll_x, 0, max_x);
+    data.scroll_y = calc_bound(data.scroll_y, 0, max_y);
+}
+
+void empire_load_editor(int empire_id, int viewport_width, int viewport_height)
+{
+    empire_load(1, empire_id);
+    empire_object_init_cities();
+
+    const empire_object *our_city = empire_object_get_our_city();
+
+    data.viewport_width = viewport_width;
+    data.viewport_height = viewport_height;
+    if (our_city) {
+        data.scroll_x = our_city->x - data.viewport_width / 2;
+        data.scroll_y = our_city->y - data.viewport_height / 2;
+    } else {
+        data.scroll_x = data.initial_scroll_x;
+        data.scroll_y = data.initial_scroll_y;
+    }
+    check_scroll_boundaries();
 }
 
 void empire_init_scenario(void)
@@ -66,20 +93,17 @@ void empire_init_scenario(void)
     empire_object_init_cities();
 }
 
-static void check_scroll_boundaries(void)
-{
-    int max_x = EMPIRE_WIDTH - data.viewport_width;
-    int max_y = EMPIRE_HEIGHT - data.viewport_height;
-
-    data.scroll_x = calc_bound(data.scroll_x, 0, max_x);
-    data.scroll_y = calc_bound(data.scroll_y, 0, max_y);
-}
-
 void empire_set_viewport(int width, int height)
 {
     data.viewport_width = width;
     data.viewport_height = height;
     check_scroll_boundaries();
+}
+
+void empire_get_scroll(int *x_scroll, int *y_scroll)
+{
+    *x_scroll = data.scroll_x;
+    *y_scroll = data.scroll_y;
 }
 
 void empire_adjust_scroll(int *x_offset, int *y_offset)
@@ -88,42 +112,22 @@ void empire_adjust_scroll(int *x_offset, int *y_offset)
     *y_offset = *y_offset - data.scroll_y;
 }
 
-void empire_scroll_map(int direction)
+void empire_set_scroll(int x, int y)
 {
-    if (direction == DIR_8_NONE) {
-        return;
-    }
-    switch (direction) {
-        case DIR_0_TOP:
-            data.scroll_y -= SCROLL_AMOUNT;
-            break;
-        case DIR_1_TOP_RIGHT:
-            data.scroll_x += SCROLL_AMOUNT;
-            data.scroll_y -= SCROLL_AMOUNT;
-            break;
-        case DIR_2_RIGHT:
-            data.scroll_x += SCROLL_AMOUNT;
-            break;
-        case DIR_3_BOTTOM_RIGHT:
-            data.scroll_x += SCROLL_AMOUNT;
-            data.scroll_y += SCROLL_AMOUNT;
-            break;
-        case DIR_4_BOTTOM:
-            data.scroll_y += SCROLL_AMOUNT;
-            break;
-        case DIR_5_BOTTOM_LEFT:
-            data.scroll_x -= SCROLL_AMOUNT;
-            data.scroll_y += SCROLL_AMOUNT;
-            break;
-        case DIR_6_LEFT:
-            data.scroll_x -= SCROLL_AMOUNT;
-            break;
-        case DIR_7_TOP_LEFT:
-            data.scroll_x -= SCROLL_AMOUNT;
-            data.scroll_y -= SCROLL_AMOUNT;
-            break;
-    }
+    data.scroll_x = x;
+    data.scroll_y = y;
     check_scroll_boundaries();
+}
+
+int empire_scroll_map(int x, int y)
+{
+    if (!x && !y) {
+        return 0;
+    }
+    data.scroll_x += x;
+    data.scroll_y += y;
+    check_scroll_boundaries();
+    return 1;
 }
 
 int empire_selected_object(void)

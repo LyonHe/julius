@@ -3,6 +3,7 @@
 #include "building/count.h"
 #include "city/resource.h"
 #include "core/calc.h"
+#include "core/image_group.h"
 #include "empire/city.h"
 #include "graphics/arrow_button.h"
 #include "graphics/generic_button.h"
@@ -26,8 +27,8 @@ static void button_toggle_trade(int param1, int param2);
 static void button_toggle_stockpile(int param1, int param2);
 
 static image_button resource_image_buttons[] = {
-    {58, 332, 27, 27, IB_NORMAL, 134, 0, button_help, button_none, 0, 0, 1},
-    {558, 335, 24, 24, IB_NORMAL, 134, 4, button_ok, button_none, 0, 0, 1}
+    {58, 332, 27, 27, IB_NORMAL, GROUP_CONTEXT_ICONS, 0, button_help, button_none, 0, 0, 1},
+    {558, 335, 24, 24, IB_NORMAL, GROUP_CONTEXT_ICONS, 4, button_ok, button_none, 0, 0, 1}
 };
 
 static arrow_button resource_arrow_buttons[] = {
@@ -36,9 +37,9 @@ static arrow_button resource_arrow_buttons[] = {
 };
 
 static generic_button resource_generic_buttons[] = {
-    {98, 250, 530, 280, GB_IMMEDIATE, button_toggle_industry, button_none, 0, 0},
-    {98, 212, 530, 242, GB_IMMEDIATE, button_toggle_trade, button_none, 0, 0},
-    {98, 288, 530, 338, GB_IMMEDIATE, button_toggle_stockpile, button_none, 0, 0},
+    {98, 250, 432, 30, button_toggle_industry, button_none, 0, 0},
+    {98, 212, 432, 30, button_toggle_trade, button_none, 0, 0},
+    {98, 288, 432, 50, button_toggle_stockpile, button_none, 0, 0},
 };
 
 static struct {
@@ -164,10 +165,6 @@ static void draw_foreground(void)
 static void handle_mouse(const mouse *m)
 {
     const mouse *m_dialog = mouse_in_dialog(m);
-    if (m->right.went_up) {
-        window_advisors_show();
-        return;
-    }
     if (image_buttons_handle_mouse(m_dialog, 0, 0, resource_image_buttons, 2, 0)) {
         return;
     }
@@ -175,12 +172,17 @@ static void handle_mouse(const mouse *m)
             arrow_buttons_handle_mouse(m_dialog, 0, 0, resource_arrow_buttons, 2)) {
         return;
     }
-    generic_buttons_handle_mouse(m_dialog, 0, 0, resource_generic_buttons, 3, &data.focus_button_id);
+    if (generic_buttons_handle_mouse(m_dialog, 0, 0, resource_generic_buttons, 3, &data.focus_button_id)) {
+        return;
+    }
+    if (m->right.went_up || (m->is_touch && m->left.double_click)) {
+        window_advisors_show();
+    }
 }
 
 static void button_help(int param1, int param2)
 {
-    window_message_dialog_show(MESSAGE_DIALOG_INDUSTRY, 1);
+    window_message_dialog_show(MESSAGE_DIALOG_INDUSTRY, 0);
 }
 
 static void button_ok(int param1, int param2)

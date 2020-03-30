@@ -19,13 +19,13 @@ static void button_cancel(int param1, int param2);
 static void arrow_button_amount(int is_down, int param2);
 
 static generic_button buttons[] = {
-    {336, 283, 496, 303, GB_IMMEDIATE, button_cancel, button_none, 0, 0},
-    {144, 283, 304, 303, GB_IMMEDIATE, button_donate, button_none, 0, 0},
-    {128, 216, 192, 236, GB_IMMEDIATE, button_set_amount, button_none, 0, 0},
-    {208, 216, 272, 236, GB_IMMEDIATE, button_set_amount, button_none, 1, 0},
-    {288, 216, 352, 236, GB_IMMEDIATE, button_set_amount, button_none, 2, 0},
-    {368, 216, 432, 236, GB_IMMEDIATE, button_set_amount, button_none, 3, 0},
-    {448, 216, 512, 236, GB_IMMEDIATE, button_set_amount, button_none, 4, 0},
+    {336, 283, 160, 20, button_cancel, button_none, 0, 0},
+    {144, 283, 160, 20, button_donate, button_none, 0, 0},
+    {128, 216, 64, 20, button_set_amount, button_none, 0, 0},
+    {208, 216, 64, 20, button_set_amount, button_none, 1, 0},
+    {288, 216, 64, 20, button_set_amount, button_none, 2, 0},
+    {368, 216, 64, 20, button_set_amount, button_none, 3, 0},
+    {448, 216, 64, 20, button_set_amount, button_none, 4, 0},
 };
 
 static arrow_button arrow_buttons[] = {
@@ -43,8 +43,8 @@ static void draw_background(void)
     graphics_in_dialog();
 
     outer_panel_draw(64, 160, 32, 10);
-    image_draw(image_group(GROUP_RESOURCE_ICONS) + RESOURCE_DENARII, 96, 176);
-    lang_text_draw_centered(52, 16, 80, 176, 496, FONT_LARGE_BLACK);
+    image_draw(image_group(GROUP_RESOURCE_ICONS) + RESOURCE_DENARII, 80, 176);
+    lang_text_draw_centered(52, 16, 112, 176, 448, FONT_LARGE_BLACK);
 
     inner_panel_draw(112, 208, 26, 4);
 
@@ -84,13 +84,16 @@ static void draw_foreground(void)
 static void handle_mouse(const mouse *m)
 {
     focus_arrow_button_id = 0;
-    if (m->right.went_up) {
+    const mouse *m_dialog = mouse_in_dialog(m);
+    if (generic_buttons_handle_mouse(m_dialog, 0, 0, buttons, 7, &focus_button_id)) {
+        return;
+    }
+    focus_arrow_button_id = arrow_buttons_handle_mouse(m_dialog, 0, 0, arrow_buttons, 2);
+    if (focus_arrow_button_id) {
+        return;
+    }
+    if (m->right.went_up || (m->is_touch && m->left.double_click)) {
         window_advisors_show();
-    } else {
-        const mouse *m_dialog = mouse_in_dialog(m);
-        if (!generic_buttons_handle_mouse(m_dialog, 0, 0, buttons, 7, &focus_button_id)) {
-            focus_arrow_button_id = arrow_buttons_handle_mouse(m_dialog, 0, 0, arrow_buttons, 2);
-        }
     }
 }
 

@@ -87,11 +87,11 @@ int image_buttons_handle_mouse(const mouse *m, int x, int y, image_button *butto
             return 0;
         }
     } else if (hit_button->button_type == IB_BUILD || hit_button->button_type == IB_NORMAL) {
-        if (!m->left.went_down && !m->right.went_down) {
+        if (!m->left.went_up && !m->right.went_up) {
             return 0;
         }
     }
-    if (m->left.went_down) {
+    if (m->left.went_up) {
         sound_effect_play(SOUND_EFFECT_ICON);
         hit_button->pressed = 1;
         hit_button->pressed_since = time_get_millis();

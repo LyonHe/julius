@@ -4,7 +4,7 @@
 #include "core/buffer.h"
 #include "figure/type.h"
 
-#define MAX_FORMATIONS 50
+#define MAX_FORMATIONS 250
 
 #define MAX_LEGIONS 6
 #define MAX_FORMATION_FIGURES 16
@@ -151,6 +151,7 @@ int formation_get_num_legions_cached(void);
 void formation_calculate_legion_totals(void);
 
 int formation_get_num_legions(void);
+int formation_get_max_legions(void);
 
 int formation_for_legion(int legion_index);
 

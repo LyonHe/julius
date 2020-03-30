@@ -4,6 +4,7 @@
 #include "city/finance.h"
 #include "city/ratings.h"
 #include "city/victory.h"
+#include "game/resource.h"
 #include "graphics/generic_button.h"
 #include "graphics/graphics.h"
 #include "graphics/image.h"
@@ -13,33 +14,48 @@
 #include "graphics/window.h"
 #include "window/advisors.h"
 
+#define MIN_DIALOG_WIDTH 384
+
 static void button_cancel(int param1, int param2);
 static void button_set_salary(int rank, int param2);
 
 static generic_button buttons[] = {
-    {240, 395, 400, 415, GB_IMMEDIATE, button_cancel, button_none, 0, 0},
-    {144, 85, 432, 105, GB_IMMEDIATE, button_set_salary, button_none, 0, 0},
-    {144, 105, 432, 125, GB_IMMEDIATE, button_set_salary, button_none, 1, 0},
-    {144, 125, 432, 145, GB_IMMEDIATE, button_set_salary, button_none, 2, 0},
-    {144, 145, 432, 165, GB_IMMEDIATE, button_set_salary, button_none, 3, 0},
-    {144, 165, 432, 185, GB_IMMEDIATE, button_set_salary, button_none, 4, 0},
-    {144, 185, 432, 205, GB_IMMEDIATE, button_set_salary, button_none, 5, 0},
-    {144, 205, 432, 225, GB_IMMEDIATE, button_set_salary, button_none, 6, 0},
-    {144, 225, 432, 245, GB_IMMEDIATE, button_set_salary, button_none, 7, 0},
-    {144, 245, 432, 265, GB_IMMEDIATE, button_set_salary, button_none, 8, 0},
-    {144, 265, 432, 285, GB_IMMEDIATE, button_set_salary, button_none, 9, 0},
-    {144, 285, 432, 305, GB_IMMEDIATE, button_set_salary, button_none, 10, 0},
+    {240, 395, 160, 20, button_cancel, button_none, 0, 0},
+    {144, 85, 352, 20, button_set_salary, button_none, 0, 0},
+    {144, 105, 352, 20, button_set_salary, button_none, 1, 0},
+    {144, 125, 352, 20, button_set_salary, button_none, 2, 0},
+    {144, 145, 352, 20, button_set_salary, button_none, 3, 0},
+    {144, 165, 352, 20, button_set_salary, button_none, 4, 0},
+    {144, 185, 352, 20, button_set_salary, button_none, 5, 0},
+    {144, 205, 352, 20, button_set_salary, button_none, 6, 0},
+    {144, 225, 352, 20, button_set_salary, button_none, 7, 0},
+    {144, 245, 352, 20, button_set_salary, button_none, 8, 0},
+    {144, 265, 352, 20, button_set_salary, button_none, 9, 0},
+    {144, 285, 352, 20, button_set_salary, button_none, 10, 0},
 };
 
 static int focus_button_id;
+
+static int get_dialog_width(void)
+{
+    int dialog_width = 16 + lang_text_get_width(52, 15, FONT_LARGE_BLACK);
+    if (dialog_width < MIN_DIALOG_WIDTH) dialog_width = MIN_DIALOG_WIDTH;
+    if (dialog_width % 16 != 0) {
+        // make sure the width is a multiple of 16
+        dialog_width += 16 - dialog_width % 16;
+    }
+    return dialog_width;
+}
 
 static void draw_foreground(void)
 {
     graphics_in_dialog();
 
-    outer_panel_draw(128, 32, 24, 25);
-    image_draw(image_group(GROUP_RESOURCE_ICONS) + 16, 144, 48);
-    lang_text_draw_centered(52, 15, 144, 48, 368, FONT_LARGE_BLACK);
+    int dialog_width = get_dialog_width();
+    int dialog_x = 128 - (dialog_width - MIN_DIALOG_WIDTH) / 2;
+    outer_panel_draw(dialog_x, 32, dialog_width / 16, 25);
+    image_draw(image_group(GROUP_RESOURCE_ICONS) + RESOURCE_DENARII, dialog_x + 16, 48);
+    lang_text_draw_centered(52, 15, dialog_x + 48, 48, dialog_width - 64, FONT_LARGE_BLACK);
 
     inner_panel_draw(144, 80, 22, 15);
 
@@ -66,11 +82,11 @@ static void draw_foreground(void)
 
 static void handle_mouse(const mouse *m)
 {
-    if (m->right.went_up) {
+    if (generic_buttons_handle_mouse(mouse_in_dialog(m), 0, 0, buttons, 12, &focus_button_id)) {
+        return;
+    }
+    if (m->right.went_up || (m->is_touch && m->left.double_click)) {
         window_advisors_show();
-    } else {
-        generic_buttons_handle_mouse(mouse_in_dialog(m), 0, 0,
-            buttons, 12, &focus_button_id);
     }
 }
 

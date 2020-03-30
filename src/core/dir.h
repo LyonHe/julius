@@ -6,13 +6,17 @@
  * Directory-related functions.
  */
 
-#define DIR_MAX_FILES 200
+enum {
+    NOT_LOCALIZED = 0,
+    MAY_BE_LOCALIZED = 1,
+    MUST_BE_LOCALIZED = 2
+};
 
 /**
  * Directory listing
  */
 typedef struct {
-    char *files[DIR_MAX_FILES]; /**< Filenames in UTF-8 encoding */
+    char **files; /**< Filenames in UTF-8 encoding */
     int num_files; /**< Number of files in the list */
 } dir_listing;
 
@@ -22,12 +26,21 @@ typedef struct {
  * @return Directory listing
  */
 const dir_listing *dir_find_files_with_extension(const char *extension);
+const dir_listing* dir_append_files_with_extension(const char* extension);
+
 
 /**
- * Get the case sensitive filename of the file
- * @param filepath File path to match to a case-sensitive file on the filesystem
- * @return Case-corrected file, or NULL if the file was not found
+ * Finds all subdirectories
+ * @return Directory listing
  */
-const char *dir_get_case_corrected_file(const char *filepath);
+const dir_listing *dir_find_all_subdirectories(void);
+
+/**
+ * Get the case sensitive and localized filename of the file
+ * @param filepath File path to match to a case-sensitive file on the filesystem
+ * @param localizable Whether the file may, must or must not be localized
+ * @return Corrected file, or NULL if the file was not found
+ */
+const char *dir_get_file(const char *filepath, int localizable);
 
 #endif // CORE_DIR_H

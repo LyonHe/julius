@@ -9,6 +9,7 @@
 #include "city/ratings.h"
 #include "city/resource.h"
 #include "city/warning.h"
+#include "core/image_group.h"
 #include "figure/formation.h"
 #include "game/settings.h"
 #include "game/tutorial.h"
@@ -36,23 +37,23 @@ static void button_change_advisor(int advisor, int param2);
 static void button_help(int param1, int param2);
 
 static image_button help_button = {
-    11, -7, 27, 27, IB_NORMAL, 134, 0, button_help, button_none, 0, 0, 1
+    11, -7, 27, 27, IB_NORMAL, GROUP_CONTEXT_ICONS, 0, button_help, button_none, 0, 0, 1
 };
 
 static generic_button advisor_buttons[] = {
-    {12, 1, 52, 41, GB_IMMEDIATE, button_change_advisor, button_none, ADVISOR_LABOR, 0},
-    {60, 1, 100, 41, GB_IMMEDIATE, button_change_advisor, button_none, ADVISOR_MILITARY, 0},
-    {108, 1, 148, 41, GB_IMMEDIATE, button_change_advisor, button_none, ADVISOR_IMPERIAL, 0},
-    {156, 1, 196, 41, GB_IMMEDIATE, button_change_advisor, button_none, ADVISOR_RATINGS, 0},
-    {204, 1, 244, 41, GB_IMMEDIATE, button_change_advisor, button_none, ADVISOR_TRADE, 0},
-    {252, 1, 292, 41, GB_IMMEDIATE, button_change_advisor, button_none, ADVISOR_POPULATION, 0},
-    {300, 1, 340, 41, GB_IMMEDIATE, button_change_advisor, button_none, ADVISOR_HEALTH, 0},
-    {348, 1, 388, 41, GB_IMMEDIATE, button_change_advisor, button_none, ADVISOR_EDUCATION, 0},
-    {396, 1, 436, 41, GB_IMMEDIATE, button_change_advisor, button_none, ADVISOR_ENTERTAINMENT, 0},
-    {444, 1, 484, 41, GB_IMMEDIATE, button_change_advisor, button_none, ADVISOR_RELIGION, 0},
-    {492, 1, 532, 41, GB_IMMEDIATE, button_change_advisor, button_none, ADVISOR_FINANCIAL, 0},
-    {540, 1, 580, 41, GB_IMMEDIATE, button_change_advisor, button_none, ADVISOR_CHIEF, 0},
-    {588, 1, 624, 41, GB_IMMEDIATE, button_change_advisor, button_none, 0, 0},
+    {12, 1, 40, 40, button_change_advisor, button_none, ADVISOR_LABOR, 0},
+    {60, 1, 40, 40, button_change_advisor, button_none, ADVISOR_MILITARY, 0},
+    {108, 1, 40, 40, button_change_advisor, button_none, ADVISOR_IMPERIAL, 0},
+    {156, 1, 40, 40, button_change_advisor, button_none, ADVISOR_RATINGS, 0},
+    {204, 1, 40, 40, button_change_advisor, button_none, ADVISOR_TRADE, 0},
+    {252, 1, 40, 40, button_change_advisor, button_none, ADVISOR_POPULATION, 0},
+    {300, 1, 40, 40, button_change_advisor, button_none, ADVISOR_HEALTH, 0},
+    {348, 1, 40, 40, button_change_advisor, button_none, ADVISOR_EDUCATION, 0},
+    {396, 1, 40, 40, button_change_advisor, button_none, ADVISOR_ENTERTAINMENT, 0},
+    {444, 1, 40, 40, button_change_advisor, button_none, ADVISOR_RELIGION, 0},
+    {492, 1, 40, 40, button_change_advisor, button_none, ADVISOR_FINANCIAL, 0},
+    {540, 1, 40, 40, button_change_advisor, button_none, ADVISOR_CHIEF, 0},
+    {588, 1, 40, 40, button_change_advisor, button_none, 0, 0},
 };
 
 static const advisor_window_type *(*sub_advisors[])(void) = {
@@ -169,13 +170,12 @@ static void handle_mouse(const mouse *m)
         focus_button_id = -1;
         return;
     }
-    if (m->right.went_up) {
-        window_city_show();
+    if (current_advisor_window->handle_mouse && current_advisor_window->handle_mouse(m_dialog)) {
         return;
     }
-
-    if (current_advisor_window->handle_mouse) {
-        current_advisor_window->handle_mouse(m_dialog);
+    if (m->right.went_up || (m->is_touch && m->left.double_click)) {
+        window_city_show();
+        return;
     }
 }
 
@@ -192,7 +192,7 @@ static void button_change_advisor(int advisor, int param2)
 static void button_help(int param1, int param2)
 {
     if (current_advisor > 0 && current_advisor < 13) {
-        window_message_dialog_show(ADVISOR_TO_MESSAGE_TEXT[current_advisor], 1);
+        window_message_dialog_show(ADVISOR_TO_MESSAGE_TEXT[current_advisor], 0);
     }
 }
 

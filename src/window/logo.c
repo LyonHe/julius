@@ -1,11 +1,14 @@
 #include "logo.h"
 
+#include "core/config.h"
 #include "graphics/graphics.h"
 #include "graphics/image.h"
 #include "graphics/lang_text.h"
 #include "graphics/window.h"
 #include "sound/music.h"
+#include "window/intro_video.h"
 #include "window/main_menu.h"
+#include "window/plain_message_dialog.h"
 
 static void init(void)
 {
@@ -25,11 +28,11 @@ static void draw_background(void)
 static void handle_mouse(const mouse *m)
 {
     if (m->left.went_up || m->right.went_up) {
-        window_main_menu_show();
+        window_main_menu_show(0);
     }
 }
 
-void window_logo_show(void)
+void window_logo_show(int show_patch_message)
 {
     window_type window = {
         WINDOW_LOGO,
@@ -39,4 +42,23 @@ void window_logo_show(void)
     };
     init();
     window_show(&window);
+    if (show_patch_message == MESSAGE_MISSING_PATCH) {
+        window_plain_message_dialog_show(
+            "Patch 1.0.1.0 not installed",
+            "Your Caesar 3 installation does not have the 1.0.1.0 patch installed. "
+            "You can download the patch from:\n"
+            "https://github.com/bvschaik/julius/wiki/Patches\n"
+            "Continue at your own risk."
+        );
+    } else if (show_patch_message == MESSAGE_MISSING_FONTS) {
+        window_plain_message_dialog_show(
+            "Missing fonts",
+            "Your Caesar 3 installation requires extra font files. "
+            "You can download them for your language from:\n"
+            "https://github.com/bvschaik/julius/wiki/Patches"
+        );
+    }
+    if (config_get(CONFIG_UI_SHOW_INTRO_VIDEO)) {
+        window_intro_video_show();
+    }
 }

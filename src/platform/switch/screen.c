@@ -3,13 +3,12 @@
 #include "SDL.h"
 
 #include "game/settings.h"
+#include "game/system.h"
 #include "graphics/graphics.h"
 #include "graphics/screen.h"
+#include "input/mouse.h"
 
 #include "switch.h"
-
-extern SDL_Texture *current_cursor;
-#include "input/mouse.h"
 
 struct {
     SDL_Window *window;
@@ -22,7 +21,7 @@ static struct {
     int y;
 } window_pos;
 
-int platform_screen_create(const char *title)
+int platform_screen_create(const char *title, int display_scale_percentage)
 {
     int width, height;
     int fullscreen = 1;
@@ -152,11 +151,16 @@ void platform_screen_render(void)
 
     const mouse *mouse = mouse_get();
     SDL_Rect dst;
-    dst.x = (mouse->x * SWITCH_PIXEL_WIDTH) / SWITCH_DISPLAY_WIDTH;
-    dst.y = (mouse->y * SWITCH_PIXEL_HEIGHT) / SWITCH_DISPLAY_HEIGHT;
+    dst.x = ((mouse->x - current_cursor->hotspot_x) * SWITCH_PIXEL_WIDTH) / SWITCH_DISPLAY_WIDTH;
+    dst.y = ((mouse->y - current_cursor->hotspot_y) * SWITCH_PIXEL_HEIGHT) / SWITCH_DISPLAY_HEIGHT;
     dst.w = (32 * SWITCH_PIXEL_WIDTH) / SWITCH_DISPLAY_WIDTH;
     dst.h = (32 * SWITCH_PIXEL_HEIGHT) / SWITCH_DISPLAY_HEIGHT;
-    SDL_RenderCopy(SDL.renderer, current_cursor, NULL, &dst);
+    SDL_RenderCopy(SDL.renderer, current_cursor->texture, NULL, &dst);
 
     SDL_RenderPresent(SDL.renderer);
+}
+
+int system_is_fullscreen_only(void)
+{
+    return 1;
 }

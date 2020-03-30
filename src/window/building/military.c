@@ -17,15 +17,15 @@ static void button_return_to_fort(int param1, int param2);
 static void button_layout(int index, int param2);
 
 static generic_button layout_buttons[] = {
-    {19, 139, 103, 223, GB_IMMEDIATE, button_layout, button_none, 0, 0},
-    {104, 139, 188, 223, GB_IMMEDIATE, button_layout, button_none, 1, 0},
-    {189, 139, 273, 223, GB_IMMEDIATE, button_layout, button_none, 2, 0},
-    {274, 139, 358, 223, GB_IMMEDIATE, button_layout, button_none, 3, 0},
-    {359, 139, 443, 223, GB_IMMEDIATE, button_layout, button_none, 4, 0}
+    {19, 139, 84, 84, button_layout, button_none, 0, 0},
+    {104, 139, 84, 84, button_layout, button_none, 1, 0},
+    {189, 139, 84, 84, button_layout, button_none, 2, 0},
+    {274, 139, 84, 84, button_layout, button_none, 3, 0},
+    {359, 139, 84, 84, button_layout, button_none, 4, 0}
 };
 
 static generic_button return_button[] = {
-    {0, 0, 288, 32, GB_IMMEDIATE, button_return_to_fort, button_none, 0, 0},
+    {0, 0, 288, 32, button_return_to_fort, button_none, 0, 0},
 };
 
 static struct {
@@ -360,7 +360,7 @@ void window_building_draw_legion_info_foreground(building_info_context *c)
     }
 }
 
-void window_building_handle_mouse_legion_info(const mouse *m, building_info_context *c)
+int window_building_handle_mouse_legion_info(const mouse *m, building_info_context *c)
 {
     data.context_for_callback = c;
     int handled = generic_buttons_handle_mouse(m, c->x_offset, c->y_offset, layout_buttons, 5, &data.focus_button_id);
@@ -370,10 +370,11 @@ void window_building_handle_mouse_legion_info(const mouse *m, building_info_cont
         }
     }
     if (!handled) {
-        generic_buttons_handle_mouse(m, c->x_offset + 16 * (c->width_blocks - 18) / 2,
+        handled = generic_buttons_handle_mouse(m, c->x_offset + 16 * (c->width_blocks - 18) / 2,
             c->y_offset + 16 * c->height_blocks - 48, return_button, 1, &data.return_button_id);
     }
     data.context_for_callback = 0;
+    return handled;
 }
 
 int window_building_get_legion_info_tooltip_text(building_info_context *c)

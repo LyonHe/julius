@@ -1,6 +1,7 @@
 #include "gift_to_emperor.h"
 
 #include "city/emperor.h"
+#include "game/resource.h"
 #include "graphics/generic_button.h"
 #include "graphics/graphics.h"
 #include "graphics/image.h"
@@ -15,11 +16,11 @@ static void button_send_gift(int param1, int param2);
 static void button_cancel(int param1, int param2);
 
 static generic_button buttons[] = {
-    {208, 213, 528, 233, GB_IMMEDIATE, button_set_gift, button_none, 1, 0},
-    {208, 233, 528, 253, GB_IMMEDIATE, button_set_gift, button_none, 2, 0},
-    {208, 253, 528, 273, GB_IMMEDIATE, button_set_gift, button_none, 3, 0},
-    {128, 336, 368, 356, GB_IMMEDIATE, button_send_gift, button_none, 0, 0},
-    {400, 336, 560, 356, GB_IMMEDIATE, button_cancel, button_none, 0, 0},
+    {208, 213, 300, 20, button_set_gift, button_none, 1, 0},
+    {208, 233, 300, 20, button_set_gift, button_none, 2, 0},
+    {208, 253, 300, 20, button_set_gift, button_none, 3, 0},
+    {128, 336, 240, 20, button_send_gift, button_none, 0, 0},
+    {400, 336, 160, 20, button_cancel, button_none, 0, 0},
 };
 
 static int focus_button_id;
@@ -36,8 +37,8 @@ static void draw_background(void)
     graphics_in_dialog();
 
     outer_panel_draw(96, 144, 30, 15);
-    image_draw(image_group(GROUP_RESOURCE_ICONS) + 16, 128, 160);
-    lang_text_draw_centered(52, 69, 128, 160, 432, FONT_LARGE_BLACK);
+    image_draw(image_group(GROUP_RESOURCE_ICONS) + RESOURCE_DENARII, 112, 160);
+    lang_text_draw_centered(52, 69, 144, 160, 416, FONT_LARGE_BLACK);
 
     int width = lang_text_draw(52, 50, 144, 304, FONT_NORMAL_BLACK);
     lang_text_draw_amount(8, 4, city_emperor_months_since_gift(), 144 + width, 304, FONT_NORMAL_BLACK);
@@ -87,10 +88,11 @@ static void draw_foreground(void)
 
 static void handle_mouse(const mouse *m)
 {
-    if (m->right.went_up) {
+    if (generic_buttons_handle_mouse(mouse_in_dialog(m), 0, 0, buttons, 5, &focus_button_id)) {
+        return;
+    }
+    if (m->right.went_up || (m->is_touch && m->left.double_click)) {
         window_advisors_show();
-    } else {
-        generic_buttons_handle_mouse(mouse_in_dialog(m), 0, 0, buttons, 5, &focus_button_id);
     }
 }
 

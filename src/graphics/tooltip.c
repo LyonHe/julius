@@ -16,7 +16,8 @@
 
 #include <stdlib.h>
 
-#define DEFAULT_TEXT_GROUP 68
+static const int DEFAULT_TEXT_GROUP = 68;
+static const time_millis TOOLTIP_DELAY_MILLIS = 150;
 
 static time_millis last_update = 0;
 static uint8_t overlay_string[1000];
@@ -45,7 +46,7 @@ static int should_draw_tooltip(tooltip_context* c)
         reset_timer();
         return 0;
     }
-    if (time_get_millis() - last_update < 150) { // delay drawing by 150 ms
+    if (time_get_millis() - last_update < TOOLTIP_DELAY_MILLIS) { // delay drawing tooltip
         return 0;
     }
     return 1;
@@ -58,21 +59,24 @@ static void reset_tooltip(tooltip_context *c)
     }
 }
 
-static void restore_button_tooltip_window_buffer(void)
+static void restore_window_under_tooltip_from_buffer(void)
 {
     if (button_tooltip_info.is_active) {
-        graphics_draw_from_buffer(button_tooltip_info.x, button_tooltip_info.y, button_tooltip_info.width, button_tooltip_info.height, button_tooltip_info.buffer);
+        graphics_draw_from_buffer(
+            button_tooltip_info.x, button_tooltip_info.y,
+            button_tooltip_info.width, button_tooltip_info.height,
+            button_tooltip_info.buffer);
     }
 }
 
-static void button_tooltip_buffer_window(int x, int y, int width, int height)
+static void save_window_under_tooltip_to_buffer(int x, int y, int width, int height)
 {
     if (button_tooltip_info.is_active &&
         x == button_tooltip_info.x && y == button_tooltip_info.y &&
         width == button_tooltip_info.width && height == button_tooltip_info.height) {
         return;
     }
-    restore_button_tooltip_window_buffer();
+    restore_window_under_tooltip_from_buffer();
     button_tooltip_info.is_active = 1;
     button_tooltip_info.x = x;
     button_tooltip_info.y = y;
@@ -148,7 +152,7 @@ static void draw_button_tooltip(tooltip_context *c)
             break;
     }
 
-    button_tooltip_buffer_window(x, y, width, height);
+    save_window_under_tooltip_to_buffer(x, y, width, height);
 
     graphics_draw_rect(x, y, width, height, COLOR_BLACK);
     graphics_fill_rect(x + 1, y + 1, width - 2, height - 2, COLOR_WHITE);
@@ -181,9 +185,13 @@ static void draw_overlay_tooltip(tooltip_context *c)
     }
     if (c->mouse_y < 200) {
         y = c->mouse_y + 50;
+    } else if (c->mouse_y + height - 72 > screen_height()) {
+        y = screen_height() - height;
     } else {
         y = c->mouse_y - 72;
     }
+
+    save_window_under_tooltip_to_buffer(x, y, width, height);
 
     graphics_draw_rect(x, y, width, height, COLOR_BLACK);
     graphics_fill_rect(x + 1, y + 1, width - 2, height - 2, COLOR_WHITE);
@@ -202,18 +210,22 @@ static void draw_senate_tooltip(tooltip_context *c)
     }
     if (c->mouse_y < 200) {
         y = c->mouse_y + 10;
+    } else if (c->mouse_y + height - 32 > screen_height()) {
+        y = screen_height() - height;
     } else {
         y = c->mouse_y - 32;
     }
-    
+
+    save_window_under_tooltip_to_buffer(x, y, width, height);
+
     graphics_draw_rect(x, y, width, height, COLOR_BLACK);
     graphics_fill_rect(x + 1, y + 1, width - 2, height - 2, COLOR_WHITE);
-    
+
     // unemployment
     lang_text_draw_colored(68, 148, x + 5, y + 5, FONT_SMALL_PLAIN, COLOR_TOOLTIP);
     text_draw_number_colored(city_labor_unemployment_percentage(), '@', "%",
         x + 140, y + 5, FONT_SMALL_PLAIN, COLOR_TOOLTIP);
-    
+
     // ratings
     lang_text_draw_colored(68, 149, x + 5, y + 19, FONT_SMALL_PLAIN, COLOR_TOOLTIP);
     text_draw_number_colored(city_rating_culture(), '@', " ",
@@ -250,6 +262,10 @@ void tooltip_invalidate(void)
 
 void tooltip_handle(const mouse *m, void (*func)(tooltip_context *))
 {
+    if (m->is_touch && !m->left.is_down) {
+        reset_timer();
+        return;
+    }
     tooltip_context context = {m->x, m->y, 0, 0, 0, 0, 0, 0};
     context.text_group = DEFAULT_TEXT_GROUP;
     if (setting_tooltips() && func) {
@@ -261,7 +277,7 @@ void tooltip_handle(const mouse *m, void (*func)(tooltip_context *))
         reset_tooltip(&context);
         rich_text_restore();
     } else {
-        restore_button_tooltip_window_buffer();
+        restore_window_under_tooltip_from_buffer();
         button_tooltip_info.is_active = 0;
     }
 }

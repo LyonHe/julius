@@ -19,7 +19,7 @@
 static void button_hold_festival(int param1, int param2);
 
 static generic_button hold_festival_button[] = {
-    {102, 280, 402, 300, GB_IMMEDIATE, button_hold_festival, button_none, 0, 0},
+    {102, 280, 300, 20, button_hold_festival, button_none, 0, 0},
 };
 
 static int focus_button_id;
@@ -161,9 +161,9 @@ static void draw_foreground(void)
     }
 }
 
-static void handle_mouse(const mouse *m)
+static int handle_mouse(const mouse *m)
 {
-    generic_buttons_handle_mouse(m, 0, 0, hold_festival_button, 1, &focus_button_id);
+    return generic_buttons_handle_mouse(m, 0, 0, hold_festival_button, 1, &focus_button_id);
 }
 
 static void button_hold_festival(int param1, int param2)

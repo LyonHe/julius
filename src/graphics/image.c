@@ -9,12 +9,27 @@
 #define FOOTPRINT_WIDTH 58
 #define FOOTPRINT_HEIGHT 30
 
+#define COMPONENT(c, shift) ((c >> shift) & 0xff)
+#define MIX_RB(src, dst, alpha) ((((src & 0xff00ff) * alpha + (dst & 0xff00ff) * (256 - alpha)) >> 8) & 0xff00ff)
+#define MIX_G(src, dst, alpha) ((((src & 0x00ff00) * alpha + (dst & 0x00ff00) * (256 - alpha)) >> 8) & 0x00ff00)
+
 typedef enum {
     DRAW_TYPE_SET,
     DRAW_TYPE_AND,
     DRAW_TYPE_NONE,
-    DRAW_TYPE_BLEND
+    DRAW_TYPE_BLEND,
+    DRAW_TYPE_BLEND_ALPHA
 } draw_type;
+
+static const int FOOTPRINT_X_START_PER_HEIGHT[] = {
+    28, 26, 24, 22, 20, 18, 16, 14, 12, 10, 8, 6, 4, 2, 0,
+    0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28
+};
+
+static const int FOOTPRINT_OFFSET_PER_HEIGHT[] = {
+    0, 2, 8, 18, 32, 50, 72, 98, 128, 162, 200, 242, 288, 338, 392, 450,
+    508, 562, 612, 658, 700, 738, 772, 802, 828, 850, 868, 882, 892, 898
+};
 
 static void draw_uncompressed(const image *img, const color_t *data, int x_offset, int y_offset, color_t color, draw_type type)
 {
@@ -28,7 +43,7 @@ static void draw_uncompressed(const image *img, const color_t *data, int x_offse
         color_t *dst = graphics_get_pixel(x_offset + clip->clipped_pixels_left, y_offset + y);
         int x_max = img->width - clip->clipped_pixels_right;
         if (type == DRAW_TYPE_NONE) {
-            if (img->draw.type == 0 || img->draw.is_external) { // can be transparent
+            if (img->draw.type == IMAGE_TYPE_WITH_TRANSPARENCY || img->draw.is_external) { // can be transparent
                 for (int x = clip->clipped_pixels_left; x < x_max; x++, dst++) {
                     if (*data != COLOR_TRANSPARENT) {
                         *dst = *data;
@@ -58,6 +73,20 @@ static void draw_uncompressed(const image *img, const color_t *data, int x_offse
             for (int x = clip->clipped_pixels_left; x < x_max; x++, dst++) {
                 if (*data != COLOR_TRANSPARENT) {
                     *dst &= color;
+                }
+                data++;
+            }
+        } else if (type == DRAW_TYPE_BLEND_ALPHA) {
+            for (int x = clip->clipped_pixels_left; x < x_max; x++, dst++) {
+                if (*data != COLOR_TRANSPARENT) {
+                    color_t alpha = COMPONENT(*data, 24);
+                    if (alpha == 255) {
+                        *dst = color;
+                    } else {
+                        color_t s = color;
+                        color_t d = *dst;
+                        *dst = MIX_RB(s, d, alpha) | MIX_G(s, d, alpha);
+                    }
                 }
                 data++;
             }
@@ -131,8 +160,6 @@ static void draw_compressed_set(const image *img, const color_t *data, int x_off
                 data += b;
                 x += b;
             } else {
-                // number of concrete pixels
-                const color_t *pixels = data;
                 data += b;
                 color_t *dst = graphics_get_pixel(x_offset + x, y_offset + y);
                 if (unclipped) {
@@ -140,7 +167,6 @@ static void draw_compressed_set(const image *img, const color_t *data, int x_off
                     while (b) {
                         *dst = color;
                         dst++;
-                        pixels++;
                         b--;
                     }
                 } else {
@@ -150,7 +176,6 @@ static void draw_compressed_set(const image *img, const color_t *data, int x_off
                         }
                         dst++;
                         x++;
-                        pixels++;
                         b--;
                     }
                 }
@@ -229,8 +254,6 @@ static void draw_compressed_blend(const image *img, const color_t *data, int x_o
                 data += b;
                 x += b;
             } else {
-                // number of concrete pixels
-                const color_t *pixels = data;
                 data += b;
                 color_t *dst = graphics_get_pixel(x_offset + x, y_offset + y);
                 if (unclipped) {
@@ -238,7 +261,6 @@ static void draw_compressed_blend(const image *img, const color_t *data, int x_o
                     while (b) {
                         *dst &= color;
                         dst++;
-                        pixels++;
                         b--;
                     }
                 } else {
@@ -248,7 +270,68 @@ static void draw_compressed_blend(const image *img, const color_t *data, int x_o
                         }
                         dst++;
                         x++;
-                        pixels++;
+                        b--;
+                    }
+                }
+            }
+        }
+    }
+}
+
+static void draw_compressed_blend_alpha(const image *img, const color_t *data, int x_offset, int y_offset, int height, color_t color)
+{
+    const clip_info *clip = graphics_get_clip_info(x_offset, y_offset, img->width, height);
+    if (!clip->is_visible) {
+        return;
+    }
+    color_t alpha = COMPONENT(color, 24);
+    if (!alpha) {
+        return;
+    }
+    if (alpha == 255) {
+        draw_compressed_set(img, data, x_offset, y_offset, height, color);
+        return;
+    }
+    color_t alpha_dst = 256 - alpha;
+    color_t src_rb = (color & 0xff00ff) * alpha;
+    color_t src_g = (color & 0x00ff00) * alpha;
+    int unclipped = clip->clip_x == CLIP_NONE;
+
+    for (int y = 0; y < height - clip->clipped_pixels_bottom; y++) {
+        int x = 0;
+        color_t *dst = graphics_get_pixel(x_offset, y_offset + y);
+        while (x < img->width) {
+            color_t b = *data;
+            data++;
+            if (b == 255) {
+                // transparent pixels to skip
+                x += *data;
+                dst += *data;
+                data++;
+            } else if (y < clip->clipped_pixels_top) {
+                data += b;
+                x += b;
+                dst += b;
+            } else {
+                data += b;
+                if (unclipped) {
+                    x += b;
+                    while (b) {
+                        color_t d = *dst;
+                        *dst = (((src_rb + (d & 0xff00ff) * alpha_dst) & 0xff00ff00) |
+                                ((src_g  + (d & 0x00ff00) * alpha_dst) & 0x00ff0000)) >> 8;
+                        b--;
+                        dst++;
+                    }
+                } else {
+                    while (b) {
+                        if (x >= clip->clipped_pixels_left && x < img->width - clip->clipped_pixels_right) {
+                            color_t d = *dst;
+                            *dst = (((src_rb + (d & 0xff00ff) * alpha_dst) & 0xff00ff00) |
+                                   ((src_g  + (d & 0x00ff00) * alpha_dst) & 0x00ff0000)) >> 8;
+                        }
+                        dst++;
+                        x++;
                         b--;
                     }
                 }
@@ -300,63 +383,55 @@ static void draw_footprint_tile(const color_t *data, int x_offset, int y_offset,
     if (!clip->is_visible) {
         return;
     }
-    // footprints are ALWAYS clipped in half, if they are clipped
+    // If the current tile neither clipped nor color masked, just draw it normally
     if (clip->clip_y == CLIP_NONE && clip->clip_x == CLIP_NONE && color_mask == COLOR_NO_MASK) {
         draw_footprint_simple(data, x_offset, y_offset);
         return;
     }
-    int clip_left = clip->clip_x == CLIP_LEFT;
-    int clip_right = clip->clip_x == CLIP_RIGHT;
-    if (clip->clip_y != CLIP_TOP) {
-        const color_t *src = data;
-        for (int y = 0; y < 15; y++) {
-            int x_max = 4 * y + 2;
-            int x_start = 29 - 1 - 2 * y;
-            if (clip_left || clip_right) {
-                x_max = 2 * y;
-            }
-            if (clip_left) {
-                x_start = 30;
-                src += x_max + 2;
-            }
-            color_t *buffer = graphics_get_pixel(x_offset + x_start, y_offset + y);
-            if (color_mask == COLOR_NO_MASK) {
-                memcpy(buffer, src, x_max * sizeof(color_t));
+    int clip_left = clip->clip_x == CLIP_LEFT || clip->clip_x == CLIP_BOTH;
+    int clip_right = clip->clip_x == CLIP_RIGHT || clip->clip_x == CLIP_BOTH;
+    const color_t *src = &data[FOOTPRINT_OFFSET_PER_HEIGHT[clip->clipped_pixels_top]];
+    for (int y = clip->clipped_pixels_top; y < clip->clipped_pixels_top + clip->visible_pixels_y; y++) {
+        int x_start = FOOTPRINT_X_START_PER_HEIGHT[y];
+        int x_max = 58 - x_start * 2;
+        int x_pixel_advance = 0;
+        if (clip_left) {
+            if (clip->clipped_pixels_left + clip->visible_pixels_x < x_start) {
                 src += x_max;
-            } else {
-                for (int x = 0; x < x_max; x++, buffer++, src++) {
-                    *buffer = *src & color_mask;
-                }
+                continue;
             }
-            if (clip_right) {
-                src += x_max + 2;
+            if (clip->clipped_pixels_left > x_start) {
+                int pixels_to_reduce = clip->clipped_pixels_left - x_start;
+                if (pixels_to_reduce >= x_max) {
+                    src += x_max;
+                    continue;
+                }
+                src += pixels_to_reduce;
+                x_max -= pixels_to_reduce;
+                x_start = clip->clipped_pixels_left;
             }
         }
-    }
-    if (clip->clip_y != CLIP_BOTTOM) {
-        const color_t *src = &data[900 / 2];
-        for (int y = 0; y < 15; y++) {
-            int x_max = 4 * (15 - 1 - y) + 2;
-            int x_start = 2 * y;
-            if (clip_left || clip_right) {
-                x_max = x_max / 2 - 1;
-            }
-            if (clip_left) {
-                x_start = 30;
-                src += x_max + 2;
-            }
-            color_t *buffer = graphics_get_pixel(x_offset + x_start, 15 + y_offset + y);
-            if (color_mask == COLOR_NO_MASK) {
-                memcpy(buffer, src, x_max * sizeof(color_t));
+        if (clip_right) {
+            int clip_x = 58 - clip->clipped_pixels_right;
+            if (clip_x < x_start) {
                 src += x_max;
-            } else {
-                for (int x = 0; x < x_max; x++, buffer++, src++) {
-                    *buffer = *src & color_mask;
-                }
+                continue;
             }
-            if (clip_right) {
-                src += x_max + 2;
+            if (x_start + x_max > clip_x) {
+                int temp_x_max = clip_x - x_start;
+                x_pixel_advance = x_max - temp_x_max;
+                x_max = temp_x_max;
             }
+        }
+        color_t *buffer = graphics_get_pixel(x_offset + x_start, y_offset + y);
+        if (color_mask == COLOR_NO_MASK) {
+            memcpy(buffer, src, x_max * sizeof(color_t));
+            src += x_max + x_pixel_advance;
+        } else {
+            for (int x = 0; x < x_max; x++, buffer++, src++) {
+                *buffer = *src & color_mask;
+            }
+            src += x_pixel_advance;
         }
     }
 }
@@ -366,16 +441,14 @@ static const color_t *tile_data(const color_t *data, int index)
     return &data[900 * index];
 }
 
-static int draw_footprint_size1(int image_id, int x, int y, color_t color_mask)
+static void draw_footprint_size1(int image_id, int x, int y, color_t color_mask)
 {
     const color_t *data = image_data(image_id);
 
     draw_footprint_tile(tile_data(data, 0), x, y, color_mask);
-
-    return FOOTPRINT_WIDTH;
 }
 
-static int draw_footprint_size2(int image_id, int x, int y, color_t color_mask)
+static void draw_footprint_size2(int image_id, int x, int y, color_t color_mask)
 {
     const color_t *data = image_data(image_id);
 
@@ -386,11 +459,9 @@ static int draw_footprint_size2(int image_id, int x, int y, color_t color_mask)
     draw_footprint_tile(tile_data(data, index++), x + 30, y + 15, color_mask);
     
     draw_footprint_tile(tile_data(data, index++), x, y + 30, color_mask);
-    
-    return FOOTPRINT_WIDTH;
 }
 
-static int draw_footprint_size3(int image_id, int x, int y, color_t color_mask)
+static void draw_footprint_size3(int image_id, int x, int y, color_t color_mask)
 {
     const color_t *data = image_data(image_id);
     
@@ -408,11 +479,9 @@ static int draw_footprint_size3(int image_id, int x, int y, color_t color_mask)
     draw_footprint_tile(tile_data(data, index++), x + 30, y + 45, color_mask);
     
     draw_footprint_tile(tile_data(data, index++), x, y + 60, color_mask);
-
-    return FOOTPRINT_WIDTH;
 }
 
-static int draw_footprint_size4(int image_id, int x, int y, color_t color_mask)
+static void draw_footprint_size4(int image_id, int x, int y, color_t color_mask)
 {
     const color_t *data = image_data(image_id);
 
@@ -439,11 +508,9 @@ static int draw_footprint_size4(int image_id, int x, int y, color_t color_mask)
     draw_footprint_tile(tile_data(data, index++), x + 30, y + 75, color_mask);
 
     draw_footprint_tile(tile_data(data, index++), x, y + 90, color_mask);
-    
-    return FOOTPRINT_WIDTH;
 }
 
-static int draw_footprint_size5(int image_id, int x, int y, color_t color_mask)
+static void draw_footprint_size5(int image_id, int x, int y, color_t color_mask)
 {
     const color_t *data = image_data(image_id);
 
@@ -481,8 +548,6 @@ static int draw_footprint_size5(int image_id, int x, int y, color_t color_mask)
     draw_footprint_tile(tile_data(data, index++), x + 30, y + 105, color_mask);
 
     draw_footprint_tile(tile_data(data, index++), x, y + 120, color_mask);
-    
-    return FOOTPRINT_WIDTH;
 }
 
 
@@ -521,7 +586,7 @@ void image_draw_masked(int image_id, int x, int y, color_t color_mask)
         return;
     }
 
-    if (img->draw.type == 30) { // isometric
+    if (img->draw.type == IMAGE_TYPE_ISOMETRIC) {
         log_error("use image_draw_isometric_footprint for isometric!", 0, image_id);
         return;
     }
@@ -546,7 +611,7 @@ void image_draw_blend(int image_id, int x, int y, color_t color)
         return;
     }
 
-    if (img->draw.type == 30) { // isometric
+    if (img->draw.type == IMAGE_TYPE_ISOMETRIC) {
         return;
     }
 
@@ -557,11 +622,63 @@ void image_draw_blend(int image_id, int x, int y, color_t color)
     }
 }
 
-void image_draw_letter(int letter_id, int x, int y, color_t color)
+void image_draw_blend_alpha(int image_id, int x, int y, color_t color)
+{
+    const image *img = image_get(image_id);
+    const color_t *data = image_data(image_id);
+    if (!data) {
+        return;
+    }
+
+    if (img->draw.type == IMAGE_TYPE_ISOMETRIC) {
+        return;
+    }
+
+    if (img->draw.is_fully_compressed) {
+        draw_compressed_blend_alpha(img, data, x, y, img->height, color);
+    } else {
+        draw_uncompressed(img, data, x, y, color, DRAW_TYPE_BLEND_ALPHA);
+    }
+}
+
+static void draw_multibyte_letter(font_t font, const image *img, const color_t *data, int x, int y, color_t color)
+{
+    switch (font) {
+        case FONT_NORMAL_WHITE:
+            draw_uncompressed(img, data, x + 1, y + 1, 0x311c10, DRAW_TYPE_BLEND_ALPHA);
+            draw_uncompressed(img, data, x, y, COLOR_WHITE, DRAW_TYPE_BLEND_ALPHA);
+            break;
+        case FONT_NORMAL_RED:
+            draw_uncompressed(img, data, x + 1, y + 1, 0xe7cfad, DRAW_TYPE_BLEND_ALPHA);
+            draw_uncompressed(img, data, x, y, 0x731408, DRAW_TYPE_BLEND_ALPHA);
+            break;
+        case FONT_NORMAL_GREEN:
+            draw_uncompressed(img, data, x + 1, y + 1, 0xe7cfad, DRAW_TYPE_BLEND_ALPHA);
+            draw_uncompressed(img, data, x, y, 0x311c10, DRAW_TYPE_BLEND_ALPHA);
+            break;
+        case FONT_NORMAL_PLAIN:
+            draw_uncompressed(img, data, x, y + 2, color, DRAW_TYPE_BLEND_ALPHA);
+            break;
+        case FONT_NORMAL_BLACK:
+        case FONT_LARGE_BLACK:
+            draw_uncompressed(img, data, x + 1, y + 1, 0xcead9c, DRAW_TYPE_BLEND_ALPHA);
+            draw_uncompressed(img, data, x, y, color, DRAW_TYPE_BLEND_ALPHA);
+            break;
+        default:
+            draw_uncompressed(img, data, x, y, color, DRAW_TYPE_BLEND_ALPHA);
+            break;
+    }
+}
+
+void image_draw_letter(font_t font, int letter_id, int x, int y, color_t color)
 {
     const image *img = image_letter(letter_id);
     const color_t *data = image_data_letter(letter_id);
     if (!data) {
+        return;
+    }
+    if (letter_id >= IMAGE_FONT_MULTIBYTE_OFFSET) {
+        draw_multibyte_letter(font, img, data, x, y, color);
         return;
     }
 
@@ -590,7 +707,7 @@ void image_draw_fullscreen_background(int image_id)
 void image_draw_isometric_footprint(int image_id, int x, int y, color_t color_mask)
 {
     const image *img = image_get(image_id);
-    if (img->draw.type != 30) { // isometric
+    if (img->draw.type != IMAGE_TYPE_ISOMETRIC) {
         return;
     }
     switch (img->width) {
@@ -615,7 +732,7 @@ void image_draw_isometric_footprint(int image_id, int x, int y, color_t color_ma
 void image_draw_isometric_footprint_from_draw_tile(int image_id, int x, int y, color_t color_mask)
 {
     const image *img = image_get(image_id);
-    if (img->draw.type != 30) { // isometric
+    if (img->draw.type != IMAGE_TYPE_ISOMETRIC) {
         return;
     }
     switch (img->width) {
@@ -640,7 +757,7 @@ void image_draw_isometric_footprint_from_draw_tile(int image_id, int x, int y, c
 void image_draw_isometric_top(int image_id, int x, int y, color_t color_mask)
 {
     const image *img = image_get(image_id);
-    if (img->draw.type != 30) { // isometric
+    if (img->draw.type != IMAGE_TYPE_ISOMETRIC) {
         return;
     }
     if (!img->draw.has_compressed_part) {
@@ -685,7 +802,7 @@ void image_draw_isometric_top(int image_id, int x, int y, color_t color_mask)
 void image_draw_isometric_top_from_draw_tile(int image_id, int x, int y, color_t color_mask)
 {
     const image *img = image_get(image_id);
-    if (img->draw.type != 30) { // isometric
+    if (img->draw.type != IMAGE_TYPE_ISOMETRIC) {
         return;
     }
     if (!img->draw.has_compressed_part) {

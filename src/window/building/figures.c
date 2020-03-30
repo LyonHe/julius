@@ -36,13 +36,13 @@ static const int FIGURE_TYPE_TO_BIG_FIGURE_IMAGE[] = {
 };
 
 static generic_button figure_buttons[] = {
-    {26, 46, 76, 96, GB_IMMEDIATE, select_figure, button_none, 0, 0},
-    {86, 46, 136, 96, GB_IMMEDIATE, select_figure, button_none, 1, 0},
-    {146, 46, 196, 96, GB_IMMEDIATE, select_figure, button_none, 2, 0},
-    {206, 46, 256, 96, GB_IMMEDIATE, select_figure, button_none, 3, 0},
-    {266, 46, 316, 96, GB_IMMEDIATE, select_figure, button_none, 4, 0},
-    {326, 46, 376, 96, GB_IMMEDIATE, select_figure, button_none, 5, 0},
-    {386, 46, 436, 96, GB_IMMEDIATE, select_figure, button_none, 6, 0},
+    {26, 46, 50, 50, select_figure, button_none, 0, 0},
+    {86, 46, 50, 50, select_figure, button_none, 1, 0},
+    {146, 46, 50, 50, select_figure, button_none, 2, 0},
+    {206, 46, 50, 50, select_figure, button_none, 3, 0},
+    {266, 46, 50, 50, select_figure, button_none, 4, 0},
+    {326, 46, 50, 50, select_figure, button_none, 5, 0},
+    {386, 46, 50, 50, select_figure, button_none, 6, 0},
 };
 
 static struct {
@@ -379,11 +379,12 @@ void window_building_prepare_figure_list(building_info_context *c)
     }
 }
 
-void window_building_handle_mouse_figure_list(const mouse *m, building_info_context *c)
+int window_building_handle_mouse_figure_list(const mouse *m, building_info_context *c)
 {
     data.context_for_callback = c;
-    generic_buttons_handle_mouse(m, c->x_offset, c->y_offset, figure_buttons, c->figure.count, &data.focus_button_id);
+    int handled = generic_buttons_handle_mouse(m, c->x_offset, c->y_offset, figure_buttons, c->figure.count, &data.focus_button_id);
     data.context_for_callback = 0;
+    return handled;
 }
 
 static void select_figure(int index, int param2)

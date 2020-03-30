@@ -2,6 +2,12 @@
 
 #include "game/resource.h"
 
+static int is_industry_type(const building *b)
+{
+    return b->output_resource_id || b->type == BUILDING_NATIVE_CROPS
+        || b->type == BUILDING_SHIPYARD || b->type == BUILDING_WHARF;
+}
+
 static void write_type_data(buffer *buf, const building *b)
 {
     if (building_is_house(b->type)) {
@@ -73,7 +79,7 @@ static void write_type_data(buffer *buf, const building *b)
             buffer_write_i16(buf, b->data.dock.docker_ids[i]);
         }
         buffer_write_i16(buf, b->data.dock.trade_ship_id);
-    } else if (b->output_resource_id || b->type == BUILDING_NATIVE_CROPS || b->type == BUILDING_SHIPYARD) {
+    } else if (is_industry_type(b)) {
         buffer_write_i16(buf, b->data.industry.progress);
         for (int i = 0; i < 12; i++) {
             buffer_write_u8(buf, 0);
@@ -91,8 +97,7 @@ static void write_type_data(buffer *buf, const building *b)
             buffer_write_u8(buf, 0);
         }
         buffer_write_i16(buf, b->data.industry.fishing_boat_id);
-    } else if (b->type == BUILDING_THEATER || b->type == BUILDING_AMPHITHEATER
-            || b->type == BUILDING_COLOSSEUM || b->type == BUILDING_HIPPODROME) {
+    } else {
         for (int i = 0; i < 26; i++) {
             buffer_write_u8(buf, 0);
         }
@@ -101,10 +106,6 @@ static void write_type_data(buffer *buf, const building *b)
         buffer_write_u8(buf, b->data.entertainment.days2);
         buffer_write_u8(buf, b->data.entertainment.play);
         for (int i = 0; i < 12; i++) {
-            buffer_write_u8(buf, 0);
-        }
-    } else {
-        for (int i = 0; i < 42; i++) {
             buffer_write_u8(buf, 0);
         }
     }
@@ -236,7 +237,7 @@ static void read_type_data(buffer *buf, building *b)
             b->data.dock.docker_ids[i] = buffer_read_i16(buf);
         }
         b->data.dock.trade_ship_id = buffer_read_i16(buf);
-    } else if (b->output_resource_id || b->type == BUILDING_NATIVE_CROPS || b->type == BUILDING_SHIPYARD) {
+    } else if (is_industry_type(b)) {
         b->data.industry.progress = buffer_read_i16(buf);
         buffer_skip(buf, 12);
         b->data.industry.has_fish = buffer_read_u8(buf);
@@ -248,16 +249,13 @@ static void read_type_data(buffer *buf, building *b)
         b->data.industry.curse_days_left = buffer_read_u8(buf);
         buffer_skip(buf, 6);
         b->data.industry.fishing_boat_id = buffer_read_i16(buf);
-    } else if (b->type == BUILDING_THEATER || b->type == BUILDING_AMPHITHEATER
-            || b->type == BUILDING_COLOSSEUM || b->type == BUILDING_HIPPODROME) {
+    } else {
         buffer_skip(buf, 26);
         b->data.entertainment.num_shows = buffer_read_u8(buf);
         b->data.entertainment.days1 = buffer_read_u8(buf);
         b->data.entertainment.days2 = buffer_read_u8(buf);
         b->data.entertainment.play = buffer_read_u8(buf);
         buffer_skip(buf, 12);
-    } else {
-        buffer_skip(buf, 42);
     }
 }
 

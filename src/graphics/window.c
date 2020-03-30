@@ -2,15 +2,19 @@
 
 #include "graphics/warning.h"
 #include "input/cursor.h"
+#include "input/touch.h"
 #include "window/city.h"
 
 #define MAX_QUEUE 3
 
-static window_type window_queue[MAX_QUEUE];
-static int queue_index = 0;
-static window_type *current_window = 0;
-static int refresh_immediate;
-static int refresh_on_draw;
+static struct {
+    window_type window_queue[MAX_QUEUE];
+    int queue_index;
+    window_type *current_window;
+    int refresh_immediate;
+    int refresh_on_draw;
+    int underlying_windows_redrawing;
+} data;
 
 static void noop(void)
 {
@@ -21,59 +25,61 @@ static void noop_mouse(const mouse *m)
 
 static void increase_queue_index(void)
 {
-    queue_index++;
-    if (queue_index >= MAX_QUEUE) {
-        queue_index = 0;
+    data.queue_index++;
+    if (data.queue_index >= MAX_QUEUE) {
+        data.queue_index = 0;
     }
 }
 
 static void decrease_queue_index(void)
 {
-    queue_index--;
-    if (queue_index < 0) {
-        queue_index = MAX_QUEUE - 1;
+    data.queue_index--;
+    if (data.queue_index < 0) {
+        data.queue_index = MAX_QUEUE - 1;
     }
 }
 
 void window_invalidate(void)
 {
-    refresh_immediate = 1;
-    refresh_on_draw = 1;
+    data.refresh_immediate = 1;
+    data.refresh_on_draw = 1;
 }
 
 int window_is_invalid(void)
 {
-    return refresh_immediate;
+    return data.refresh_immediate;
 }
 
 void window_request_refresh(void)
 {
-    refresh_on_draw = 1;
+    data.refresh_on_draw = 1;
 }
 
 int window_is(window_id id)
 {
-    return current_window->id == id;
+    return data.current_window->id == id;
 }
 
 window_id window_get_id(void)
 {
-    return current_window->id;
+    return data.current_window->id;
 }
 
 void window_show(const window_type *window)
 {
+    mouse_reset_button_state();
+    reset_touches(1);
     increase_queue_index();
-    window_queue[queue_index] = *window;
-    current_window = &window_queue[queue_index];
-    if (!current_window->draw_background) {
-        current_window->draw_background = noop;
+    data.window_queue[data.queue_index] = *window;
+    data.current_window = &data.window_queue[data.queue_index];
+    if (!data.current_window->draw_background) {
+        data.current_window->draw_background = noop;
     }
-    if (!current_window->draw_foreground) {
-        current_window->draw_foreground = noop;
+    if (!data.current_window->draw_foreground) {
+        data.current_window->draw_foreground = noop;
     }
-    if (!current_window->handle_mouse) {
-        current_window->handle_mouse = noop_mouse;
+    if (!data.current_window->handle_mouse) {
+        data.current_window->handle_mouse = noop_mouse;
     }
     window_invalidate();
 }
@@ -81,35 +87,56 @@ void window_show(const window_type *window)
 void window_go_back(void)
 {
     decrease_queue_index();
-    current_window = &window_queue[queue_index];
+    data.current_window = &data.window_queue[data.queue_index];
     window_invalidate();
 }
 
 static void update_mouse_before(void)
 {
-    mouse_determine_button_state();
+    if (!touch_to_mouse()) {
+        mouse_determine_button_state();  // touch overrides mouse
+    }
 }
 
 static void update_mouse_after(void)
 {
-    mouse_set_scroll(SCROLL_NONE);
-    input_cursor_update(current_window->id);
+    reset_touches(0);
+    mouse_reset_scroll();
+    input_cursor_update(data.current_window->id);
 }
 
 void window_draw(int force)
 {
     update_mouse_before();
-    if (force || refresh_on_draw) {
+    window_type *w = data.current_window;
+    if (force || data.refresh_on_draw) {
         tooltip_invalidate();
-        current_window->draw_background();
-        refresh_on_draw = 0;
-        refresh_immediate = 0;
+        w->draw_background();
+        data.refresh_on_draw = 0;
+        data.refresh_immediate = 0;
     }
-    current_window->draw_foreground();
+    w->draw_foreground();
 
     const mouse *m = mouse_get();
-    current_window->handle_mouse(m);
-    tooltip_handle(m, current_window->get_tooltip);
+    w->handle_mouse(m);
+    tooltip_handle(m, w->get_tooltip);
     warning_draw();
     update_mouse_after();
+}
+
+void window_draw_underlying_window(void)
+{
+    if (data.underlying_windows_redrawing < MAX_QUEUE) {
+        ++data.underlying_windows_redrawing;
+        decrease_queue_index();
+        window_type *window_behind = &data.window_queue[data.queue_index];
+        if (window_behind->draw_background) {
+            window_behind->draw_background();
+        }
+        if (window_behind->draw_foreground) {
+            window_behind->draw_foreground();
+        }
+        increase_queue_index();
+        --data.underlying_windows_redrawing;
+    }
 }

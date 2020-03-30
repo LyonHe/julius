@@ -3,7 +3,9 @@
 #include "city/view.h"
 #include "figure/formation.h"
 #include "figure/image.h"
+#include "figuretype/editor.h"
 #include "graphics/image.h"
+#include "graphics/text.h"
 
 static void draw_figure_with_cart(const figure *f, int x, int y)
 {
@@ -112,6 +114,27 @@ static void draw_fort_standard(const figure *f, int x, int y)
     }
 }
 
+static void draw_map_flag(const figure *f, int x, int y)
+{
+    // base
+    image_draw(f->image_id, x, y);
+    // flag
+    image_draw(f->cart_image_id, x, y - image_get(f->cart_image_id)->height);
+    // flag number
+    int number = 0;
+    int id = f->resource_id;
+    if (id >= MAP_FLAG_INVASION_MIN && id < MAP_FLAG_INVASION_MAX) {
+        number = id - MAP_FLAG_INVASION_MIN + 1;
+    } else if (id >= MAP_FLAG_FISHING_MIN && id < MAP_FLAG_FISHING_MAX) {
+        number = id - MAP_FLAG_FISHING_MIN + 1;
+    } else if (id >= MAP_FLAG_HERD_MIN && id < MAP_FLAG_HERD_MAX) {
+        number = id - MAP_FLAG_HERD_MIN + 1;
+    }
+    if (number > 0) {
+        text_draw_number_colored(number, '@', " ", x + 6, y + 7, FONT_NORMAL_PLAIN, COLOR_WHITE);
+    }
+}
+
 static void tile_cross_country_offset_to_pixel_offset(int cross_country_x, int cross_country_y,
                                                       int *pixel_x, int *pixel_y)
 {
@@ -131,6 +154,9 @@ static void tile_cross_country_offset_to_pixel_offset(int cross_country_x, int c
 
 static int tile_progress_to_pixel_offset_x(int direction, int progress)
 {
+    if (progress >= 15) {
+        return 0;
+    }
     switch (direction) {
         case DIR_0_TOP:
         case DIR_2_RIGHT:
@@ -149,6 +175,9 @@ static int tile_progress_to_pixel_offset_x(int direction, int progress)
 
 static int tile_progress_to_pixel_offset_y(int direction, int progress)
 {
+    if (progress >= 15) {
+        return 0;
+    }
     switch (direction) {
         case DIR_0_TOP:
         case DIR_6_LEFT:
@@ -222,6 +251,9 @@ static void draw_figure(const figure *f, int x, int y)
                 break;
             case FIGURE_FORT_STANDARD:
                 draw_fort_standard(f, x, y);
+                break;
+            case FIGURE_MAP_FLAG:
+                draw_map_flag(f, x, y);
                 break;
             default:
                 image_draw(f->image_id, x, y);

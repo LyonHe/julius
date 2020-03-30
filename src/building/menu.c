@@ -1,13 +1,14 @@
 #include "menu.h"
 
 #include "city/buildings.h"
+#include "core/config.h"
 #include "empire/city.h"
 #include "game/tutorial.h"
 #include "scenario/building.h"
 
-#define MAX_BUILDING_ITEMS 30
+#define BUILD_MENU_ITEM_MAX 30
 
-static const building_type MENU_BUILDING_TYPE[MAX_BUILDING_ITEMS][MAX_BUILDING_ITEMS] = {
+static const building_type MENU_BUILDING_TYPE[BUILD_MENU_MAX][BUILD_MENU_ITEM_MAX] = {
     {BUILDING_HOUSE_VACANT_LOT, 0},
     {BUILDING_CLEAR_LAND, 0},
     {BUILDING_ROAD, 0},
@@ -18,45 +19,28 @@ static const building_type MENU_BUILDING_TYPE[MAX_BUILDING_ITEMS][MAX_BUILDING_I
     {BUILDING_THEATER, BUILDING_AMPHITHEATER, BUILDING_COLOSSEUM, BUILDING_HIPPODROME,
         BUILDING_GLADIATOR_SCHOOL, BUILDING_LION_HOUSE, BUILDING_ACTOR_COLONY, BUILDING_CHARIOT_MAKER, 0},
     {BUILDING_FORUM, BUILDING_SENATE_UPGRADED, BUILDING_GOVERNORS_HOUSE, BUILDING_GOVERNORS_VILLA, BUILDING_GOVERNORS_PALACE,
-        BUILDING_SMALL_STATUE, BUILDING_MEDIUM_STATUE, BUILDING_LARGE_STATUE, BUILDING_TRIUMPHAL_ARCH, 0},
+        BUILDING_SMALL_STATUE, BUILDING_MEDIUM_STATUE, BUILDING_LARGE_STATUE, BUILDING_ROADBLOCK, BUILDING_TRIUMPHAL_ARCH, 0},
     {BUILDING_GARDENS, BUILDING_PLAZA, BUILDING_ENGINEERS_POST, BUILDING_LOW_BRIDGE, BUILDING_SHIP_BRIDGE,
         BUILDING_SHIPYARD, BUILDING_DOCK, BUILDING_WHARF, 0},
     {BUILDING_WALL, BUILDING_TOWER, BUILDING_GATEHOUSE, BUILDING_PREFECTURE,
         BUILDING_FORT, BUILDING_MILITARY_ACADEMY, BUILDING_BARRACKS, 0},
     {BUILDING_MENU_FARMS, BUILDING_MENU_RAW_MATERIALS, BUILDING_MENU_WORKSHOPS,
         BUILDING_MARKET, BUILDING_GRANARY, BUILDING_WAREHOUSE, 0},
-    // 12 = housing for debug (TODO: remove editor menus)
-    {BUILDING_HOUSE_VACANT_LOT, BUILDING_HOUSE_LARGE_TENT, BUILDING_HOUSE_SMALL_SHACK, BUILDING_HOUSE_LARGE_SHACK,
-        BUILDING_HOUSE_SMALL_HOVEL, BUILDING_HOUSE_LARGE_HOVEL, BUILDING_HOUSE_SMALL_CASA, BUILDING_HOUSE_LARGE_CASA,
-        BUILDING_HOUSE_SMALL_INSULA, BUILDING_HOUSE_MEDIUM_INSULA, BUILDING_HOUSE_LARGE_INSULA, BUILDING_HOUSE_GRAND_INSULA,
-        BUILDING_HOUSE_SMALL_VILLA, BUILDING_HOUSE_MEDIUM_VILLA, BUILDING_HOUSE_LARGE_VILLA, BUILDING_HOUSE_GRAND_VILLA,
-        BUILDING_HOUSE_SMALL_PALACE, BUILDING_HOUSE_MEDIUM_PALACE, BUILDING_HOUSE_LARGE_PALACE, BUILDING_HOUSE_LUXURY_PALACE, 0},
-    {1, 2, 3, 4, 5, 0}, // 13 brush size?
-    {1, 2, 0}, // 14 people entry/exit?
-    {1, 2, 3, 0}, // 15 elevation raise/lower/access
-    {1, 2, 3, 4, 5, 6, 7, 8, 0}, // 16 invasion points
-    {1, 2, 0}, // 17 river entry/exit
-    {1, 2, 3, 0}, // 18 natives
     {BUILDING_WHEAT_FARM, BUILDING_VEGETABLE_FARM, BUILDING_FRUIT_FARM, BUILDING_OLIVE_FARM, BUILDING_VINES_FARM, BUILDING_PIG_FARM, 0},
     {BUILDING_CLAY_PIT, BUILDING_MARBLE_QUARRY, BUILDING_IRON_MINE, BUILDING_TIMBER_YARD, 0},
     {BUILDING_WINE_WORKSHOP, BUILDING_OIL_WORKSHOP, BUILDING_WEAPONS_WORKSHOP, BUILDING_FURNITURE_WORKSHOP, BUILDING_POTTERY_WORKSHOP, 0},
-    {BUILDING_SMALL_TEMPLE_CERES, BUILDING_SMALL_TEMPLE_NEPTUNE, BUILDING_SMALL_TEMPLE_MERCURY, BUILDING_SMALL_TEMPLE_MARS, BUILDING_SMALL_TEMPLE_VENUS, 0},
-    {BUILDING_LARGE_TEMPLE_CERES, BUILDING_LARGE_TEMPLE_NEPTUNE, BUILDING_LARGE_TEMPLE_MERCURY, BUILDING_LARGE_TEMPLE_MARS, BUILDING_LARGE_TEMPLE_VENUS, 0},
+    {BUILDING_MENU_SMALL_TEMPLES, BUILDING_SMALL_TEMPLE_CERES, BUILDING_SMALL_TEMPLE_NEPTUNE, BUILDING_SMALL_TEMPLE_MERCURY, BUILDING_SMALL_TEMPLE_MARS, BUILDING_SMALL_TEMPLE_VENUS, 0},
+    {BUILDING_MENU_LARGE_TEMPLES, BUILDING_LARGE_TEMPLE_CERES, BUILDING_LARGE_TEMPLE_NEPTUNE, BUILDING_LARGE_TEMPLE_MERCURY, BUILDING_LARGE_TEMPLE_MARS, BUILDING_LARGE_TEMPLE_VENUS, 0},
     {BUILDING_FORT_LEGIONARIES, BUILDING_FORT_JAVELIN, BUILDING_FORT_MOUNTED, 0},
-    {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 0}, // 25 herd/fish points
-    {0}, // 26 unused
-    {0}, // 27 unused
-    {0}, // 28 unused
-    {0}, // 29 unused
 };
-static int menu_enabled[MAX_BUILDING_ITEMS][MAX_BUILDING_ITEMS];
+static int menu_enabled[BUILD_MENU_MAX][BUILD_MENU_ITEM_MAX];
 
 static int changed = 1;
 
 void building_menu_enable_all(void)
 {
-    for (int sub = 0; sub < MAX_BUILDING_ITEMS; sub++) {
-        for (int item = 0; item < MAX_BUILDING_ITEMS; item++) {
+    for (int sub = 0; sub < BUILD_MENU_MAX; sub++) {
+        for (int item = 0; item < BUILD_MENU_ITEM_MAX; item++) {
             menu_enabled[sub][item] = 1;
         }
     }
@@ -76,10 +60,19 @@ static void enable_clear(int *enabled, building_type menu_building_type)
     }
 }
 
+static void enable_cycling_temples_if_allowed(building_type type)
+{
+    int sub = (type == BUILDING_MENU_SMALL_TEMPLES) ? BUILD_MENU_SMALL_TEMPLES : BUILD_MENU_LARGE_TEMPLES;
+    menu_enabled[sub][0] = 1;
+}
+
 static void enable_if_allowed(int *enabled, building_type menu_building_type, building_type type)
 {
     if (menu_building_type == type && scenario_building_allowed(type)) {
         *enabled = 1;
+        if (type == BUILDING_MENU_SMALL_TEMPLES || type == BUILDING_MENU_LARGE_TEMPLES) {
+            enable_cycling_temples_if_allowed(type);
+        }
     }
 }
 
@@ -160,6 +153,7 @@ static void enable_normal(int *enabled, building_type type)
             *enabled = 1;
         }
     }
+    enable_if_allowed(enabled, type, BUILDING_ROADBLOCK);
 }
 
 static void enable_tutorial1_start(int *enabled, building_type type)
@@ -182,6 +176,7 @@ static void enable_tutorial1_after_collapse(int *enabled, building_type type)
     enable_tutorial1_after_fire(enabled, type);
     enable_if_allowed(enabled, type, BUILDING_ENGINEERS_POST);
     enable_if_allowed(enabled, type, BUILDING_SENATE_UPGRADED);
+    enable_if_allowed(enabled, type, BUILDING_ROADBLOCK);
 }
 
 static void enable_tutorial2_start(int *enabled, building_type type)
@@ -193,6 +188,7 @@ static void enable_tutorial2_start(int *enabled, building_type type)
     enable_if_allowed(enabled, type, BUILDING_PREFECTURE);
     enable_if_allowed(enabled, type, BUILDING_ENGINEERS_POST);
     enable_if_allowed(enabled, type, BUILDING_SENATE_UPGRADED);
+    enable_if_allowed(enabled, type, BUILDING_ROADBLOCK);
     enable_if_allowed(enabled, type, BUILDING_MARKET);
     enable_if_allowed(enabled, type, BUILDING_GRANARY);
     enable_if_allowed(enabled, type, BUILDING_MENU_FARMS);
@@ -250,8 +246,8 @@ static void disable_resources(int *enabled, building_type type)
 void building_menu_update(void)
 {
     tutorial_build_buttons tutorial_buttons = tutorial_get_build_buttons();
-    for (int sub = 0; sub < MAX_BUILDING_ITEMS; sub++) {
-        for (int item = 0; item < MAX_BUILDING_ITEMS; item++) {
+    for (int sub = 0; sub < BUILD_MENU_MAX; sub++) {
+        for (int item = 0; item < BUILD_MENU_ITEM_MAX; item++) {
             int building_type = MENU_BUILDING_TYPE[sub][item];
             int *menu_item = &menu_enabled[sub][item];
             // first 12 items always disabled
@@ -296,7 +292,7 @@ void building_menu_update(void)
 int building_menu_count_items(int submenu)
 {
     int count = 0;
-    for (int item = 0; item < MAX_BUILDING_ITEMS; item++) {
+    for (int item = 0; item < BUILD_MENU_ITEM_MAX; item++) {
         if (menu_enabled[submenu][item] && MENU_BUILDING_TYPE[submenu][item] > 0) {
             count++;
         }
@@ -306,7 +302,7 @@ int building_menu_count_items(int submenu)
 
 int building_menu_next_index(int submenu, int current_index)
 {
-    for (int i = current_index + 1; i < MAX_BUILDING_ITEMS; i++) {
+    for (int i = current_index + 1; i < BUILD_MENU_ITEM_MAX; i++) {
         if (MENU_BUILDING_TYPE[submenu][i] <= 0) {
             return 0;
         }

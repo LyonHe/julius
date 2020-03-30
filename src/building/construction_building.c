@@ -11,12 +11,15 @@
 #include "city/buildings.h"
 #include "city/view.h"
 #include "city/warning.h"
+#include "core/config.h"
 #include "core/image.h"
 #include "core/random.h"
 #include "figure/formation_legion.h"
 #include "game/undo.h"
 #include "map/building_tiles.h"
+#include "map/grid.h"
 #include "map/orientation.h"
+#include "map/routing.h"
 #include "map/routing_terrain.h"
 #include "map/terrain.h"
 #include "map/tiles.h"
@@ -335,6 +338,7 @@ static void add_to_map(int type, building *b, int size,
         case BUILDING_GRANARY:
             b->storage_id = building_storage_create();
             add_building(b, image_group(GROUP_BUILDING_GRANARY));
+            map_tiles_update_area_roads(b->x, b->y, 5);
             break;
         case BUILDING_MARKET:
             add_building(b, image_group(GROUP_BUILDING_MARKET));
@@ -402,6 +406,12 @@ static void add_to_map(int type, building *b, int size,
             break;
         case BUILDING_ORACLE:
             add_building(b, image_group(GROUP_BUILDING_ORACLE));
+            break;
+        case BUILDING_ROADBLOCK:
+            add_building(b, image_group(GROUP_ROADBLOCK));
+            map_terrain_add_roadblock_road(b->x, b->y, orientation);	    
+            map_tiles_update_area_roads(b->x, b->y, 5);
+            map_tiles_update_all_plazas();
             break;
         // ships
         case BUILDING_SHIPYARD:
@@ -495,7 +505,7 @@ static void add_to_map(int type, building *b, int size,
 int building_construction_place_building(building_type type, int x, int y)
 {
     int terrain_mask = TERRAIN_ALL;
-    if (type == BUILDING_GATEHOUSE || type == BUILDING_TRIUMPHAL_ARCH) {
+    if (type == BUILDING_GATEHOUSE || type == BUILDING_TRIUMPHAL_ARCH || type == BUILDING_ROADBLOCK) {
         terrain_mask = ~TERRAIN_ROAD;
     } else if (type == BUILDING_TOWER) {
         terrain_mask = ~TERRAIN_WALL;
@@ -527,6 +537,11 @@ int building_construction_place_building(building_type type, int x, int y)
             } else {
                 building_orientation = 2;
             }
+        }
+    }
+    if (type == BUILDING_ROADBLOCK) {
+        if (map_tiles_are_clear(x, y, size, TERRAIN_ROAD)) {
+            return 0;
         }
     }
     if (type == BUILDING_TRIUMPHAL_ARCH) {
@@ -575,7 +590,7 @@ int building_construction_place_building(building_type type, int x, int y)
             city_warning_show(WARNING_CLEAR_LAND_NEEDED);
             return 0;
         }
-        if (formation_get_num_legions_cached() >= MAX_LEGIONS) {
+        if (formation_get_num_legions_cached() >= formation_get_max_legions()) {
             city_warning_show(WARNING_MAX_LEGIONS_REACHED);
             return 0;
         }
@@ -595,11 +610,12 @@ int building_construction_place_building(building_type type, int x, int y)
         city_warning_show(WARNING_ONE_BUILDING_OF_TYPE);
         return 0;
     }
-    if (type == BUILDING_BARRACKS && building_count_total(BUILDING_BARRACKS) > 0) {
+    if (type == BUILDING_BARRACKS && city_buildings_has_barracks()) {
         city_warning_show(WARNING_ONE_BUILDING_OF_TYPE);
         return 0;
     }
     building_construction_warning_check_all(type, x, y, size);
+    
 
     // phew, checks done!
     building *b;

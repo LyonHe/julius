@@ -1,6 +1,6 @@
 #include "enemy_army.h"
 
-#define MAX_ENEMY_ARMIES 25
+#define MAX_ENEMY_ARMIES 125
 
 #include "figure/formation.h"
 #include "map/soldier_strength.h"
@@ -94,7 +94,7 @@ void enemy_army_calculate_roman_influence(void)
         return;
     }
     map_soldier_strength_clear();
-    for (int i = 1; i <= MAX_LEGIONS; i++) {
+    for (int i = 1; i < MAX_FORMATIONS; i++) {
         const formation *m = formation_get(i);
         if (m->in_use != 1 || !m->is_legion) {
             continue;

@@ -15,235 +15,221 @@ struct game_file_part {
 };
 
 static struct game_file_part save_game_parts[] = {
-    {0, 4, "saveGameMissionId"},
-    {0, 4, "savegameFileVersion"},
-    {1, 52488, "Data_Grid_graphicIds", 2},
-    {1, 26244, "Data_Grid_edge"},
-    {1, 52488, "Data_Grid_buildingIds", 2},
-    {1, 52488, "Data_Grid_terrain", 2},
-    {1, 26244, "Data_Grid_aqueducts"},
-    {1, 52488, "Data_Grid_walkerIds", 2},
-    {1, 26244, "Data_Grid_bitfields"},
-    {1, 26244, "Data_Grid_spriteOffsets"},
-    {0, 26244, "Data_Grid_random"},
-    {1, 26244, "Data_Grid_desirability"},
-    {1, 26244, "Data_Grid_elevation"},
-    {1, 26244, "Data_Grid_buildingDamage"},
-    {1, 26244, "Data_Grid_Undo_aqueducts"},
-    {1, 26244, "Data_Grid_Undo_spriteOffsets"},
-    {1, 128000, "Data_Walkers", 128},
-    {1, 1200, "Data_Routes.walkerIds"},
-    {1, 300000, "Data_Routes.directionPaths", 500},
-    {1, 6400, "Data_Formations", 128},
-    {0, 4, "Data_Formation_Extra.idLastInUse"},
-    {0, 4, "Data_Formation_Extra.idLastLegion"},
-    {0, 4, "Data_Formation_Extra.numLegions"},
-    {1, 36136, "Data_CityInfo", 17908},
-    {0, 2, "Data_CityInfo_Extra.unknownBytes"},
-    {0, 64, "playerNames"},
-    {0, 4, "Data_CityInfo_Extra.ciid"},
-    {1, 256000, "Data_Buildings", 128},
-    {0, 4, "Data_Settings_Map.orientation"},
-    {0, 4, "Data_CityInfo_Extra.gameTimeTick"},
-    {0, 4, "Data_CityInfo_Extra.gameTimeDay"},
-    {0, 4, "Data_CityInfo_Extra.gameTimeMonth"},
-    {0, 4, "Data_CityInfo_Extra.gameTimeYear"},
-    {0, 4, "Data_CityInfo_Extra.gameTimeTotalDays"},
-    {0, 4, "Data_Buildings_Extra.highestBuildingIdEver"},
-    {0, 4, "Data_Debug.maxConnectsEver"},
-    {0, 4, "Data_Random.iv1"},
-    {0, 4, "Data_Random.iv2"},
-    {0, 4, "Data_Settings_Map.camera.x"},
-    {0, 4, "Data_Settings_Map.camera.y"},
-    {0, 4, "Data_CityInfo_Buildings.theater.total"},
-    {0, 4, "Data_CityInfo_Buildings.theater.working"},
-    {0, 4, "Data_CityInfo_Buildings.amphitheater.total"},
-    {0, 4, "Data_CityInfo_Buildings.amphitheater.working"},
-    {0, 4, "Data_CityInfo_Buildings.colosseum.total"},
-    {0, 4, "Data_CityInfo_Buildings.colosseum.working"},
-    {0, 4, "Data_CityInfo_Buildings.hippodrome.total"},
-    {0, 4, "Data_CityInfo_Buildings.hippodrome.working"},
-    {0, 4, "Data_CityInfo_Buildings.school.total"},
-    {0, 4, "Data_CityInfo_Buildings.school.working"},
-    {0, 4, "Data_CityInfo_Buildings.library.total"},
-    {0, 4, "Data_CityInfo_Buildings.library.working"},
-    {0, 4, "Data_CityInfo_Buildings.academy.total"},
-    {0, 4, "Data_CityInfo_Buildings.academy.working"},
-    {0, 4, "Data_CityInfo_Buildings.barber.total"},
-    {0, 4, "Data_CityInfo_Buildings.barber.working"},
-    {0, 4, "Data_CityInfo_Buildings.bathhouse.total"},
-    {0, 4, "Data_CityInfo_Buildings.bathhouse.working"},
-    {0, 4, "Data_CityInfo_Buildings.clinic.total"},
-    {0, 4, "Data_CityInfo_Buildings.clinic.working"},
-    {0, 4, "Data_CityInfo_Buildings.hospital.total"},
-    {0, 4, "Data_CityInfo_Buildings.hospital.working"},
-    {0, 4, "Data_CityInfo_Buildings.smallTempleCeres.total"},
-    {0, 4, "Data_CityInfo_Buildings.smallTempleNeptune.total"},
-    {0, 4, "Data_CityInfo_Buildings.smallTempleMercury.total"},
-    {0, 4, "Data_CityInfo_Buildings.smallTempleMars.total"},
-    {0, 4, "Data_CityInfo_Buildings.smallTempleVenus.total"},
-    {0, 4, "Data_CityInfo_Buildings.largeTempleCeres.total"},
-    {0, 4, "Data_CityInfo_Buildings.largeTempleNeptune.total"},
-    {0, 4, "Data_CityInfo_Buildings.largeTempleMercury.total"},
-    {0, 4, "Data_CityInfo_Buildings.largeTempleMars.total"},
-    {0, 4, "Data_CityInfo_Buildings.largeTempleVenus.total"},
-    {0, 4, "Data_CityInfo_Buildings.oracle.total"},
-    {0, 4, "Data_CityInfo_Extra.populationGraphOrder"},
-    {0, 4, "Data_CityInfo_Extra.unknownOrder"},
-    {0, 4, "Data_Event.emperorChange.gameYear"},
-    {0, 4, "Data_Event.emperorChange.month"},
-    {0, 4, "Data_Empire.scrollX"},
-    {0, 4, "Data_Empire.scrollY"},
-    {0, 4, "Data_Empire.selectedObject"},
-    {1, 2706, "Data_Empire_Cities"},
-    {0, 64, "Data_CityInfo_Buildings.industry.total"},
-    {0, 64, "Data_CityInfo_Buildings.industry.working"},
-    {0, 128, "Data_TradePrices"},
-    {0, 4, "Data_Walker_NameSequence.citizenMale"},
-    {0, 4, "Data_Walker_NameSequence.patrician"},
-    {0, 4, "Data_Walker_NameSequence.citizenFemale"},
-    {0, 4, "Data_Walker_NameSequence.taxCollector"},
-    {0, 4, "Data_Walker_NameSequence.engineer"},
-    {0, 4, "Data_Walker_NameSequence.prefect"},
-    {0, 4, "Data_Walker_NameSequence.javelinThrower"},
-    {0, 4, "Data_Walker_NameSequence.cavalry"},
-    {0, 4, "Data_Walker_NameSequence.legionary"},
-    {0, 4, "Data_Walker_NameSequence.actor"},
-    {0, 4, "Data_Walker_NameSequence.gladiator"},
-    {0, 4, "Data_Walker_NameSequence.lionTamer"},
-    {0, 4, "Data_Walker_NameSequence.charioteer"},
-    {0, 4, "Data_Walker_NameSequence.barbarian"},
-    {0, 4, "Data_Walker_NameSequence.enemyGreek"},
-    {0, 4, "Data_Walker_NameSequence.enemyEgyptian"},
-    {0, 4, "Data_Walker_NameSequence.enemyArabian"},
-    {0, 4, "Data_Walker_NameSequence.trader"},
-    {0, 4, "Data_Walker_NameSequence.tradeShip"},
-    {0, 4, "Data_Walker_NameSequence.warShip"},
-    {0, 4, "Data_Walker_NameSequence.enemyShip"},
-    {0, 4, "Data_CityInfo_CultureCoverage.theater"},
-    {0, 4, "Data_CityInfo_CultureCoverage.amphitheater"},
-    {0, 4, "Data_CityInfo_CultureCoverage.colosseum"},
-    {0, 4, "Data_CityInfo_CultureCoverage.hospital"},
-    {0, 4, "Data_CityInfo_CultureCoverage.hippodrome"},
-    {0, 4, "Data_CityInfo_CultureCoverage.religionCeres"},
-    {0, 4, "Data_CityInfo_CultureCoverage.religionNeptune"},
-    {0, 4, "Data_CityInfo_CultureCoverage.religionMercury"},
-    {0, 4, "Data_CityInfo_CultureCoverage.religionMars"},
-    {0, 4, "Data_CityInfo_CultureCoverage.religionVenus"},
-    {0, 4, "Data_CityInfo_CultureCoverage.oracle"},
-    {0, 4, "Data_CityInfo_CultureCoverage.school"},
-    {0, 4, "Data_CityInfo_CultureCoverage.library"},
-    {0, 4, "Data_CityInfo_CultureCoverage.academy"},
-    {0, 4, "Data_CityInfo_CultureCoverage.hospital"},
-    {0, 1720, "Data_Scenario"},
-    {0, 4, "Data_Event.timeLimitMaxGameYear"},
-    {0, 4, "Data_Event.earthquake.gameYear"},
-    {0, 4, "Data_Event.earthquake.month"},
-    {0, 4, "Data_Event.earthquake.state"},
-    {0, 4, "Data_Event.earthquake.duration"},
-    {0, 4, "Data_Event.earthquake.maxDuration"},
-    {0, 4, "Data_Event.earthquake.maxDelay"},
-    {0, 4, "Data_Event.earthquake.delay"},
-    {0, 32, "Data_Event.earthquake.expand"},
-    {0, 4, "Data_Event.emperorChange.state"},
-    {1, 16000, "Data_Message.messages"},
-    {0, 4, "Data_Message.nextMessageSequence"},
-    {0, 4, "Data_Message.totalMessages"},
-    {0, 4, "Data_Message.currentMessageId"},
-    {0, 10, "Data_Message.populationMessagesShown"},
-    {0, 80, "Data_Message.messageCategoryCount"},
-    {0, 80, "Data_Message.messageDelay"},
-    {0, 4, "Data_BuildingList.burning.totalBurning"},
-    {0, 4, "Data_BuildingList.burning.index"},
-    {0, 4, "Data_Walker_Extra.createdSequence"},
-    {0, 4, "Data_Settings.startingFavor"},
-    {0, 4, "Data_Settings.personalSavingsLastMission"},
-    {0, 4, "Data_Settings.currentMissionId"},
-    {1, 3232, "Data_InvasionWarnings"},
-    {0, 4, "Data_Settings.isCustomScenario"},
-    {0, 8960, "Data_Sound_City", 128},
-    {0, 4, "Data_Buildings_Extra.highestBuildingIdInUse"},
-    {0, 4800, "Data_Walker_Traders"},
-    {0, 4, "Data_Walker_Extra.nextTraderId"},
-    {1, 1000, "Data_BuildingList.burning.items"},
-    {1, 1000, "Data_BuildingList.small.items"},
-    {1, 4000, "Data_BuildingList.large.items"},
-    {0, 4, "Data_Tutorial.tutorial1.fire"},
-    {0, 4, "Data_Tutorial.tutorial1.crime"},
-    {0, 4, "Data_Tutorial.tutorial1.collapse"},
-    {0, 4, "Data_Tutorial.tutorial2.granaryBuilt"},
-    {0, 4, "Data_Tutorial.tutorial2.population250Reached"},
-    {0, 4, "Data_Tutorial.tutorial1.senateBuilt"},
-    {0, 4, "Data_Tutorial.tutorial2.population450Reached"},
-    {0, 4, "Data_Tutorial.tutorial2.potteryMade"},
-    {0, 4, "Data_CityInfo_Buildings.militaryAcademy.total"},
-    {0, 4, "Data_CityInfo_Buildings.militaryAcademy.working"},
-    {0, 4, "Data_CityInfo_Buildings.barracks.total"},
-    {0, 4, "Data_CityInfo_Buildings.barracks.working"},
-    {0, 4, "Data_Formation_Extra.numEnemyFormations"},
-    {0, 4, "Data_Formation_Extra.numEnemySoldierStrength"},
-    {0, 4, "Data_Formation_Extra.numLegionFormations"},
-    {0, 4, "Data_Formation_Extra.numLegionSoldierStrength"},
-    {0, 4, "Data_Formation_Extra.daysSinceRomanSoldierConcentration"},
-    {0, 6400, "Data_Building_Storages"},
-    {0, 4, "Data_CityInfo_Buildings.actorColony.total"},
-    {0, 4, "Data_CityInfo_Buildings.actorColony.working"},
-    {0, 4, "Data_CityInfo_Buildings.gladiatorSchool.total"},
-    {0, 4, "Data_CityInfo_Buildings.gladiatorSchool.working"},
-    {0, 4, "Data_CityInfo_Buildings.lionHouse.total"},
-    {0, 4, "Data_CityInfo_Buildings.lionHouse.working"},
-    {0, 4, "Data_CityInfo_Buildings.chariotMaker.total"},
-    {0, 4, "Data_CityInfo_Buildings.chariotMaker.working"},
-    {0, 4, "Data_CityInfo_Buildings.market.total"},
-    {0, 4, "Data_CityInfo_Buildings.market.working"},
-    {0, 4, "Data_CityInfo_Buildings.reservoir.total"},
-    {0, 4, "Data_CityInfo_Buildings.reservoir.working"},
-    {0, 4, "Data_CityInfo_Buildings.fountain.total"},
-    {0, 4, "Data_CityInfo_Buildings.fountain.working"},
-    {0, 4, "Data_Tutorial.tutorial2.potteryMadeYear"},
-    {0, 4, "Data_Event.gladiatorRevolt.gameYear"},
-    {0, 4, "Data_Event.gladiatorRevolt.month"},
-    {0, 4, "Data_Event.gladiatorRevolt.endMonth"},
-    {0, 4, "Data_Event.gladiatorRevolt.state"},
-    {1, 1280, "Data_Empire_Trade.maxPerYear"},
-    {1, 1280, "Data_Empire_Trade.tradedThisYear"},
-    {0, 4, "Data_Buildings_Extra.barracksTowerSentryRequested"},
-    {0, 4, "Data_Buildings_Extra.createdSequence"},
-    {0, 4, "Data_Routes.unknown1RoutesCalculated"},
-    {0, 4, "Data_Routes.enemyRoutesCalculated"},
-    {0, 4, "Data_Routes.totalRoutesCalculated"},
-    {0, 4, "Data_Routes.unknown1RoutesCalculated"},
-    {0, 4, "Data_CityInfo_Buildings.smallTempleCeres.working"},
-    {0, 4, "Data_CityInfo_Buildings.smallTempleNeptune.working"},
-    {0, 4, "Data_CityInfo_Buildings.smallTempleMercury.working"},
-    {0, 4, "Data_CityInfo_Buildings.smallTempleMars.working"},
-    {0, 4, "Data_CityInfo_Buildings.smallTempleVenus.working"},
-    {0, 4, "Data_CityInfo_Buildings.largeTempleCeres.working"},
-    {0, 4, "Data_CityInfo_Buildings.largeTempleNeptune.working"},
-    {0, 4, "Data_CityInfo_Buildings.largeTempleMercury.working"},
-    {0, 4, "Data_CityInfo_Buildings.largeTempleMars.working"},
-    {0, 4, "Data_CityInfo_Buildings.largeTempleVenus.working"},
-    {0, 100, "Data_Formation_Invasion.formationId"},
-    {0, 100, "Data_Formation_Invasion.homeX"},
-    {0, 100, "Data_Formation_Invasion.homeY"},
-    {0, 100, "Data_Formation_Invasion.layout"},
-    {0, 100, "Data_Formation_Invasion.destinationX"},
-    {0, 100, "Data_Formation_Invasion.destinationY"},
-    {0, 100, "Data_Formation_Invasion.destinationBuildingId"},
-    {0, 100, "Data_Formation_Invasion.numLegions"},
-    {0, 100, "Data_Formation_Invasion.ignoreRomanSoldiers"},
-    {0, 4, "Data_CityInfo_Extra.entryPointFlag.x"},
-    {0, 4, "Data_CityInfo_Extra.entryPointFlag.y"},
-    {0, 4, "Data_CityInfo_Extra.exitPointFlag.x"},
-    {0, 4, "Data_CityInfo_Extra.exitPointFlag.y"},
-    {0, 2, "Data_Event.lastInternalInvasionId"},
-    {0, 4, "Data_Debug.incorrectHousePositions"},
-    {0, 4, "Data_Debug.unfixableHousePositions"},
-    {0, 65, "Data_FileList.selectedScenario"},
-    {0, 32, "Data_CityInfo_Extra.bookmarks"},
-    {0, 4, "Data_Tutorial.tutorial3.disease"},
-    {0, 4, "Data_CityInfo_Extra.entryPointFlag.gridOffset"},
-    {0, 4, "Data_CityInfo_Extra.exitPointFlag.gridOffset"},
+    {0, 4, "scenario_campaign_mission"},
+    {0, 4, "file_version"},
+    {1, 52488, "image_grid", 2},
+    {1, 26244, "edge_grid"},
+    {1, 52488, "building_grid", 2},
+    {1, 52488, "terrain_grid", 2},
+    {1, 26244, "aqueduct_grid"},
+    {1, 52488, "figure_grid", 2},
+    {1, 26244, "bitfields_grid"},
+    {1, 26244, "sprite_grid"},
+    {0, 26244, "random_grid"},
+    {1, 26244, "desirability_grid"},
+    {1, 26244, "elevation_grid"},
+    {1, 26244, "building_damage_grid"},
+    {1, 26244, "aqueduct_backup_grid"},
+    {1, 26244, "sprite_backup_grid"},
+    {1, 128000, "figures", 128},
+    {1, 1200, "route_figures", 2},
+    {1, 300000, "route_paths", 500},
+    {1, 6400, "formations", 128},
+    {0, 12, "formation_totals"},
+    {1, 36136, "city_data", 17908},
+    {0, 2, "city_faction_unknown"},
+    {0, 64, "player_name"},
+    {0, 4, "city_faction"},
+    {1, 256000, "buildings", 128},
+    {0, 4, "city_view_orientation"},
+    {0, 4, "game_time.tick"},
+    {0, 4, "game_time.day"},
+    {0, 4, "game_time.month"},
+    {0, 4, "game_time.year"},
+    {0, 4, "game_time.total_days"},
+    {0, 8, "building_extra_highest_id_ever"},
+    {0, 8, "random_iv"},
+    {0, 8, "camera"},
+    {0, 4, "building_count.theater.total"},
+    {0, 4, "building_count.theater.working"},
+    {0, 4, "building_count.amphitheater.total"},
+    {0, 4, "building_count.amphitheater.working"},
+    {0, 4, "building_count.colosseum.total"},
+    {0, 4, "building_count.colosseum.working"},
+    {0, 4, "building_count.hippodrome.total"},
+    {0, 4, "building_count.hippodrome.working"},
+    {0, 4, "building_count.school.total"},
+    {0, 4, "building_count.school.working"},
+    {0, 4, "building_count.library.total"},
+    {0, 4, "building_count.library.working"},
+    {0, 4, "building_count.academy.total"},
+    {0, 4, "building_count.academy.working"},
+    {0, 4, "building_count.barber.total"},
+    {0, 4, "building_count.barber.working"},
+    {0, 4, "building_count.bathhouse.total"},
+    {0, 4, "building_count.bathhouse.working"},
+    {0, 4, "building_count.clinic.total"},
+    {0, 4, "building_count.clinic.working"},
+    {0, 4, "building_count.hospital.total"},
+    {0, 4, "building_count.hospital.working"},
+    {0, 4, "building_count.smallTempleCeres.total"},
+    {0, 4, "building_count.smallTempleNeptune.total"},
+    {0, 4, "building_count.smallTempleMercury.total"},
+    {0, 4, "building_count.smallTempleMars.total"},
+    {0, 4, "building_count.smallTempleVenus.total"},
+    {0, 4, "building_count.largeTempleCeres.total"},
+    {0, 4, "building_count.largeTempleNeptune.total"},
+    {0, 4, "building_count.largeTempleMercury.total"},
+    {0, 4, "building_count.largeTempleMars.total"},
+    {0, 4, "building_count.largeTempleVenus.total"},
+    {0, 4, "building_count.oracle.total"},
+    {0, 8, "city_graph_order"},
+    {0, 8, "emperor_change_time"},
+    {0, 4, "empire.scroll_x"},
+    {0, 4, "empire.scroll_y"},
+    {0, 4, "empire.selected_object"},
+    {1, 2706, "empire_cities"},
+    {0, 64, "building_count_industry.total"},
+    {0, 64, "building_count_industry.active"},
+    {0, 128, "trade_prices"},
+    {0, 4, "figure_names.citizen_male"},
+    {0, 4, "figure_names.patrician"},
+    {0, 4, "figure_names.citizen_female"},
+    {0, 4, "figure_names.tax_collector"},
+    {0, 4, "figure_names.engineer"},
+    {0, 4, "figure_names.prefect"},
+    {0, 4, "figure_names.javelin_thrower"},
+    {0, 4, "figure_names.cavalry"},
+    {0, 4, "figure_names.legionary"},
+    {0, 4, "figure_names.actor"},
+    {0, 4, "figure_names.gladiator"},
+    {0, 4, "figure_names.lion_tamer"},
+    {0, 4, "figure_names.charioteer"},
+    {0, 4, "figure_names.barbarian"},
+    {0, 4, "figure_names.enemy_greek"},
+    {0, 4, "figure_names.enemy_egyptian"},
+    {0, 4, "figure_names.enemy_arabian"},
+    {0, 4, "figure_names.trader"},
+    {0, 4, "figure_names.ship"},
+    {0, 4, "figure_names.warship"},
+    {0, 4, "figure_names.enemy_warship"},
+    {0, 4, "culture_coverage.theater"},
+    {0, 4, "culture_coverage.amphitheater"},
+    {0, 4, "culture_coverage.colosseum"},
+    {0, 4, "culture_coverage.hospital"},
+    {0, 4, "culture_coverage.hippodrome"},
+    {0, 4, "culture_coverage.religion_ceres"},
+    {0, 4, "culture_coverage.religion_neptune"},
+    {0, 4, "culture_coverage.religion_mercury"},
+    {0, 4, "culture_coverage.religion_mars"},
+    {0, 4, "culture_coverage.religion_venus"},
+    {0, 4, "culture_coverage.oracle"},
+    {0, 4, "culture_coverage.school"},
+    {0, 4, "culture_coverage.library"},
+    {0, 4, "culture_coverage.academy"},
+    {0, 4, "culture_coverage.hospital"},
+    {0, 1720, "scenario"},
+    {0, 4, "max_game_year"},
+    {0, 4, "earthquake.game_year"},
+    {0, 4, "earthquake.month"},
+    {0, 4, "earthquake.state"},
+    {0, 4, "earthquake.duration"},
+    {0, 4, "earthquake.max_duration"},
+    {0, 4, "earthquake.max_delay"},
+    {0, 4, "earthquake.delay"},
+    {0, 32, "earthquake.expand"},
+    {0, 4, "emperor_change_state"},
+    {1, 16000, "messages"},
+    {0, 4, "message_extra.next_message_sequence"},
+    {0, 4, "message_extra.total_messages"},
+    {0, 4, "message_extra.current_message_id"},
+    {0, 10, "population_messages"},
+    {0, 80, "message_counts"},
+    {0, 80, "message_delays"},
+    {0, 4, "building_list_burning_totals.total"},
+    {0, 4, "building_list_burning_totals.size"},
+    {0, 4, "figure_sequence"},
+    {0, 12, "scenario_settings"},
+    {1, 3232, "invasion_warnings"},
+    {0, 4, "scenario_is_custom"},
+    {0, 8960, "city_sounds", 128},
+    {0, 4, "building_extra_highest_id"},
+    {0, 4800, "figure_traders"},
+    {0, 4, "figure_traders.next_trader_id"},
+    {1, 1000, "building_list_burning"},
+    {1, 1000, "building_list_small"},
+    {1, 4000, "building_list_large"},
+    {0, 4, "tutorial_part1.tutorial1.fire"},
+    {0, 4, "tutorial_part1.tutorial1.crime"},
+    {0, 4, "tutorial_part1.tutorial1.collapse"},
+    {0, 4, "tutorial_part1.tutorial2.granaryBuilt"},
+    {0, 4, "tutorial_part1.tutorial2.population250Reached"},
+    {0, 4, "tutorial_part1.tutorial1.senateBuilt"},
+    {0, 4, "tutorial_part1.tutorial2.population450Reached"},
+    {0, 4, "tutorial_part1.tutorial2.potteryMade"},
+    {0, 4, "building_count.militaryAcademy.total"},
+    {0, 4, "building_count.militaryAcademy.working"},
+    {0, 4, "building_count.barracks.total"},
+    {0, 4, "building_count.barracks.working"},
+    {0, 4, "enemy_army_totals.enemy_formations"},
+    {0, 4, "enemy_army_totals.enemy_strength"},
+    {0, 4, "enemy_army_totals.legion_formations"},
+    {0, 4, "enemy_army_totals.legion_strength"},
+    {0, 4, "enemy_army_totals.days_since_roman_influence_calculation"},
+    {0, 6400, "building_storages"},
+    {0, 4, "building_count.actorColony.total"},
+    {0, 4, "building_count.actorColony.working"},
+    {0, 4, "building_count.gladiatorSchool.total"},
+    {0, 4, "building_count.gladiatorSchool.working"},
+    {0, 4, "building_count.lionHouse.total"},
+    {0, 4, "building_count.lionHouse.working"},
+    {0, 4, "building_count.chariotMaker.total"},
+    {0, 4, "building_count.chariotMaker.working"},
+    {0, 4, "building_count.market.total"},
+    {0, 4, "building_count.market.working"},
+    {0, 4, "building_count.reservoir.total"},
+    {0, 4, "building_count.reservoir.working"},
+    {0, 4, "building_count.fountain.total"},
+    {0, 4, "building_count.fountain.working"},
+    {0, 4, "tutorial_part2"},
+    {0, 4, "gladiator_revolt.gameYear"},
+    {0, 4, "gladiator_revolt.month"},
+    {0, 4, "gladiator_revolt.endMonth"},
+    {0, 4, "gladiator_revolt.state"},
+    {1, 1280, "trade_route_limit"},
+    {1, 1280, "trade_route_traded"},
+    {0, 4, "building_barracks_tower_sentry"},
+    {0, 4, "building_extra_sequence"},
+    {0, 4, "routing_counters.unknown"},
+    {0, 4, "routing_counters.enemy_routes_calculated"},
+    {0, 4, "routing_counters.total_routes_calculated"},
+    {0, 4, "routing_counters.unknown"},
+    {0, 4, "building_count.smallTempleCeres.working"},
+    {0, 4, "building_count.smallTempleNeptune.working"},
+    {0, 4, "building_count.smallTempleMercury.working"},
+    {0, 4, "building_count.smallTempleMars.working"},
+    {0, 4, "building_count.smallTempleVenus.working"},
+    {0, 4, "building_count.largeTempleCeres.working"},
+    {0, 4, "building_count.largeTempleNeptune.working"},
+    {0, 4, "building_count.largeTempleMercury.working"},
+    {0, 4, "building_count.largeTempleMars.working"},
+    {0, 4, "building_count.largeTempleVenus.working"},
+    {0, 100, "enemy_armies.formation_id"},
+    {0, 100, "enemy_armies.home_x"},
+    {0, 100, "enemy_armies.home_y"},
+    {0, 100, "enemy_armies.layout"},
+    {0, 100, "enemy_armies.destination_x"},
+    {0, 100, "enemy_armies.destination_y"},
+    {0, 100, "enemy_armies.destination_building_id"},
+    {0, 100, "enemy_armies.num_legions"},
+    {0, 100, "enemy_armies.ignore_roman_soldiers"},
+    {0, 16, "city_entry_exit_xy"},
+    {0, 2, "last_invasion_id"},
+    {0, 8, "building_extra_corrupt_houses"},
+    {0, 65, "scenario_name"},
+    {0, 32, "bookmarks"},
+    {0, 4, "tutorial_part3"},
+    {0, 8, "city_entry_exit_grid_offset"},
     {0, 0, ""},
 };
 
@@ -268,6 +254,20 @@ static int index_of_part(const char *part_name)
             return i;
         }
     }
+    printf("WARN: part %s not found\n", part_name);
+    return -1;
+}
+
+static int offset_of_part(const char *part_name)
+{
+    int total_offset = 0;
+    for (int i = 0; save_game_parts[i].length_in_bytes; i++) {
+        if (strcmp(part_name, save_game_parts[i].name) == 0) {
+            return total_offset;
+        }
+        total_offset += save_game_parts[i].length_in_bytes;
+    }
+    printf("WARN: part %s not found\n", part_name);
     return -1;
 }
 
@@ -282,10 +282,11 @@ static int read_compressed_chunk(FILE *fp, void *buffer, int bytes_to_read)
         input_size = to_uint(intbuf);
     }
     if (input_size == UNCOMPRESSED) {
-        fread(buffer, 1, bytes_to_read, fp);
+        if (fread(buffer, 1, bytes_to_read, fp) != bytes_to_read) {
+            return 0;
+        }
     } else {
-        fread(compress_buffer, 1, input_size, fp);
-        if (!zip_decompress(compress_buffer, input_size, buffer, &bytes_to_read)) {
+        if (fread(compress_buffer, 1, input_size, fp) != input_size || !zip_decompress(compress_buffer, input_size, buffer, &bytes_to_read)) {
             return 0;
         }
     }
@@ -301,15 +302,41 @@ static int unpack(const char *filename, unsigned char *buffer)
     }
     int offset = 0;
     for (int i = 0; save_game_parts[i].length_in_bytes; i++) {
+        int result = 0;
         if (save_game_parts[i].compressed) {
-            read_compressed_chunk(fp, &buffer[offset], save_game_parts[i].length_in_bytes);
+            result = read_compressed_chunk(fp, &buffer[offset], save_game_parts[i].length_in_bytes);
         } else {
-            fread(&buffer[offset], 1, save_game_parts[i].length_in_bytes, fp);
+            result = fread(&buffer[offset], 1, save_game_parts[i].length_in_bytes, fp) == save_game_parts[i].length_in_bytes;
         }
         offset += save_game_parts[i].length_in_bytes;
+        if (!result) {
+            printf("Error while loading file %s\n", filename);
+            fclose(fp);
+            return 0;
+        }
     }
     fclose(fp);
     return offset;
+}
+
+static int has_adjacent_building_type(int part_offset, int building_type)
+{
+    int grid_offset = part_offset / 2;
+    const int adjacent_tiles[] = { -162, 1, 162, -1 };
+    
+    for (int i = 0; i < 4; ++i) {
+        int adjacent_offset = grid_offset + adjacent_tiles[i];
+        if (adjacent_offset < 0 || adjacent_offset >= 162 * 162) {
+            continue;
+        }
+        int building_id = to_ushort(&file1_data[offset_of_part("building_grid") + adjacent_offset * 2]);
+        int building_offset = offset_of_part("buildings") + building_id * 128;
+        int type = to_ushort(&file1_data[building_offset + 10]);
+        if (type == building_type) {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 static int is_between(unsigned int value, unsigned int range_from, unsigned int range_to)
@@ -337,7 +364,7 @@ static int is_exception_cityinfo(int global_offset, int part_offset)
     return 0;
 }
 
-static int is_exception_image_grid(int global_offset)
+static int is_exception_image_grid(int global_offset, int part_offset)
 {
     unsigned int v1 = to_ushort(&file1_data[global_offset & ~1]);
     unsigned int v2 = to_ushort(&file2_data[global_offset & ~1]);
@@ -347,6 +374,12 @@ static int is_exception_image_grid(int global_offset)
     }
     // burning tent: fix in julius to use its own graphic
     if ((v1 == 734 && is_between(v2, 743, 770)) || (v2 == 734 && is_between(v1, 743, 770))) {
+        return 1;
+    }
+    // Exception for roads next to a granary: in julius the dirt roads and paved roads lead
+    // into the granary, while in Caesar 3 they do not. Therefore we do not check roads that
+    // are adjacent to a granary (building type 71).
+    if (both_between(v1, v2, 591, 657) && has_adjacent_building_type(part_offset, 71)) {
         return 1;
     }
     return 0;
@@ -363,31 +396,58 @@ static int is_exception_buildings(int global_offset, int part_offset)
     return 0;
 }
 
+static int is_exception_building_grid(int global_offset, int part_offset)
+{
+    int grid_offset = part_offset / 2;
+    // Exception for earthquake tiles: Caesar 3 does not clear the building ID when
+    // a building gets destroyed by an earthquake, resulting in visual artifacts;
+    // Julius does clear the building ID from the grid.
+    // Earthquake tile is defined as:
+    // - 0x80 bit is set in bitfields_grid
+    // - 0x0002 bit is set in terrain_grid
+    int is_earthquake = (file1_data[offset_of_part("bitfields_grid") + grid_offset] & 0x80) &&
+            (file1_data[offset_of_part("terrain_grid") + 2 * grid_offset] & 0x02);
+    if (is_earthquake) {
+        unsigned int v1 = to_ushort(&file1_data[global_offset & ~1]);
+        unsigned int v2 = to_ushort(&file2_data[global_offset & ~1]);
+        if (v1 == 0 || v2 == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 static int is_exception(int index, int global_offset, int part_offset)
 {
-    if (index == 2) { // Data_Grid_graphicIds
-        return is_exception_image_grid(global_offset);
+    if (index == index_of_part("city_sounds")) {
+        return 1;
     }
-    if (index == 9) { // sprite offsets
+    if (index == index_of_part("sprite_backup_grid")) {
+        return 1;
+    }
+    if (index == index_of_part("camera")) {
+        return 1;
+    }
+    if (index == index_of_part("image_grid")) {
+        return is_exception_image_grid(global_offset, part_offset);
+    }
+    if (index == index_of_part("sprite_grid")) {
         // don't care about sprite + building = animation
         int building_offset = global_offset - 8 * 162 * 162 + part_offset;
         if (file1_data[building_offset] || file1_data[building_offset + 1]) {
             return 1;
         }
     }
-    if (index == index_of_part("Data_Grid_Undo_spriteOffsets")) {
-        return 1;
-    }
-    if (index == index_of_part("Data_Settings_Map.camera.x") || index == index_of_part("Data_Settings_Map.camera.y")) {
-        return 1;
-    }
-    if (index == index_of_part("Data_CityInfo")) {
+    if (index == index_of_part("city_data")) {
         return is_exception_cityinfo(global_offset, part_offset);
     }
-    if (index == index_of_part("Data_Buildings")) {
+    if (index == index_of_part("buildings")) {
         return is_exception_buildings(global_offset, part_offset);
     }
-    if (index == index_of_part("Data_BuildingList.burning.index")) {
+    if (index == index_of_part("building_grid")) {
+        return is_exception_building_grid(global_offset, part_offset);
+    }
+    if (index == index_of_part("building_list_burning_totals.size")) {
         // We use it for burning size in Julius, while C3 writes the index used to loop over the buildings,
         // which is either 0 (no prefects in the city) or the burning size
         // So: we ignore this variable if one of them is zero
@@ -408,10 +468,14 @@ static int compare_part(int index, int offset)
             printf("Part %d [%s] (%d) ", index, save_game_parts[index].name, i);
             if (save_game_parts[index].record_length) {
                 printf("record %d offset 0x%X", i / save_game_parts[index].record_length, i % save_game_parts[index].record_length);
-                if (index == index_of_part("Data_Buildings")) {
+                if (index == index_of_part("buildings")) {
                     int record_length = save_game_parts[index].record_length;
                     int type_offset = (i / record_length) * record_length + 10;
                     printf(" (type: %d)", to_ushort(&file1_data[offset + type_offset]));
+                } else if (index == index_of_part("figures")) {
+                    int record_length = save_game_parts[index].record_length;
+                    int type_offset = (i / record_length) * record_length + 10;
+                    printf(" (type: %d)", file1_data[offset + type_offset]);
                 }
             } else {
                 printf("offset %d", i);
@@ -455,9 +519,7 @@ static int compare(void)
     int offset = 0;
     int different = 0;
     for (int i = 0; save_game_parts[i].length_in_bytes; i++) {
-        if (i != 146) { // skip city sounds
-            different |= compare_part(i, offset);
-        }
+        different |= compare_part(i, offset);
         offset += save_game_parts[i].length_in_bytes;
     }
     return different;

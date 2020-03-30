@@ -37,6 +37,7 @@ static void check_road_access(int type, int x, int y, int size)
         case BUILDING_WELL:
         case BUILDING_RESERVOIR:
         case BUILDING_GATEHOUSE:
+        case BUILDING_ROADBLOCK:
         case BUILDING_TRIUMPHAL_ARCH:
         case BUILDING_HOUSE_VACANT_LOT:
         case BUILDING_FORT:
@@ -52,6 +53,8 @@ static void check_road_access(int type, int x, int y, int size)
     } else if (type == BUILDING_WAREHOUSE && map_has_road_access(x, y, size, 0)) {
         has_road = 1;
     } else if (type == BUILDING_HIPPODROME && map_has_road_access_hippodrome(x, y, 0)) {
+        has_road = 1;
+    } else if (type == BUILDING_ORACLE && map_closest_road_within_radius(x, y, size, 2, 0, 0)) {
         has_road = 1;
     }
     if (!has_road) {

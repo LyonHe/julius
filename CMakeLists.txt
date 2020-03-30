@@ -5,8 +5,9 @@ if(VITA_BUILD AND SWITCH_BUILD)
     message(FATAL_ERROR "Cannot build with -DVITA_BUILD=ON and -DSWITCH_BUILD=ON at the same time")
 endif()
 
-option(VITA_BUILD "Build for the PlayStation Vita handheld game console." OFF)
-cmake_dependent_option(SWITCH_BUILD "Build for the Nintendo Switch handheld game console." OFF "NOT VITA_BUILD" OFF)
+option(DRAW_FPS "Draw FPS on the top left corner of the window." OFF)
+cmake_dependent_option(VITA_BUILD "Build for the PlayStation Vita handheld game console." OFF "NOT MSVC" OFF)
+cmake_dependent_option(SWITCH_BUILD "Build for the Nintendo Switch handheld game console." OFF "NOT MSVC; NOT VITA_BUILD" OFF)
 
 if(VITA_BUILD AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     if(DEFINED ENV{VITASDK})
@@ -52,8 +53,8 @@ if (CMAKE_COMPILER_IS_GNUCC)
 endif()
 
 set(PROJECT_VERSION_MAJOR 1)
-set(PROJECT_VERSION_MINOR 0)
-set(PROJECT_VERSION_PATCH 0)
+set(PROJECT_VERSION_MINOR 3)
+set(PROJECT_VERSION_PATCH 1)
 set(IS_RELEASE_VERSION FALSE)
 
 if(IS_RELEASE_VERSION)
@@ -136,22 +137,38 @@ if(DRAW_FPS)
   add_definitions(-DDRAW_FPS)
 endif()
 
-set(SMK_FILES
-    ext/libsmacker/smacker.c
-    ext/libsmacker/smk_bitstream.c
-    ext/libsmacker/smk_hufftree.c
-)
-
 set(TINYFD_FILES
     ext/tinyfiledialogs/tinyfiledialogs.c
 )
 
+set(PNG_FILES
+    ext/png/png.c
+    ext/png/pngerror.c
+    ext/png/pngmem.c
+    ext/png/pngset.c
+    ext/png/pngwio.c
+    ext/png/pngwrite.c
+    ext/png/pngwutil.c
+)
+
+set(ZLIB_FILES
+    ext/zlib/adler32.c
+    ext/zlib/crc32.c
+    ext/zlib/deflate.c
+    ext/zlib/trees.c
+    ext/zlib/zutil.c
+)
+
 set(PLATFORM_FILES
+    ${PROJECT_SOURCE_DIR}/src/platform/arguments.c
+    ${PROJECT_SOURCE_DIR}/src/platform/file_manager.c
     ${PROJECT_SOURCE_DIR}/src/platform/julius.c
     ${PROJECT_SOURCE_DIR}/src/platform/keyboard_input.c
     ${PROJECT_SOURCE_DIR}/src/platform/log.c
     ${PROJECT_SOURCE_DIR}/src/platform/prefs.c
     ${PROJECT_SOURCE_DIR}/src/platform/sound_device.c
+    ${PROJECT_SOURCE_DIR}/src/platform/touch.c
+    ${PROJECT_SOURCE_DIR}/src/platform/virtual_keyboard.c
 )
 
 if (VITA_BUILD)
@@ -161,6 +178,7 @@ if (VITA_BUILD)
         ${PROJECT_SOURCE_DIR}/src/platform/vita/screen.c
         ${PROJECT_SOURCE_DIR}/src/platform/vita/vita.c
         ${PROJECT_SOURCE_DIR}/src/platform/vita/vita_input.c
+        ${PROJECT_SOURCE_DIR}/src/platform/vita/vita_touch.c
         ${PROJECT_SOURCE_DIR}/src/platform/vita/vita_keyboard.c
     )
 elseif (SWITCH_BUILD)
@@ -169,6 +187,7 @@ elseif (SWITCH_BUILD)
         ${PROJECT_SOURCE_DIR}/src/platform/switch/cursor.c
         ${PROJECT_SOURCE_DIR}/src/platform/switch/screen.c
         ${PROJECT_SOURCE_DIR}/src/platform/switch/switch_input.c
+        ${PROJECT_SOURCE_DIR}/src/platform/switch/switch_touch.c
         ${PROJECT_SOURCE_DIR}/src/platform/switch/switch_keyboard.c
     )
 else()
@@ -180,15 +199,20 @@ else()
 endif()
 
 set(CORE_FILES
+    ${PROJECT_SOURCE_DIR}/src/core/backtrace.c
     ${PROJECT_SOURCE_DIR}/src/core/buffer.c
     ${PROJECT_SOURCE_DIR}/src/core/calc.c
+    ${PROJECT_SOURCE_DIR}/src/core/config.c
     ${PROJECT_SOURCE_DIR}/src/core/dir.c
     ${PROJECT_SOURCE_DIR}/src/core/encoding.c
+    ${PROJECT_SOURCE_DIR}/src/core/encoding_multibyte.c
     ${PROJECT_SOURCE_DIR}/src/core/file.c
     ${PROJECT_SOURCE_DIR}/src/core/image.c
     ${PROJECT_SOURCE_DIR}/src/core/io.c
     ${PROJECT_SOURCE_DIR}/src/core/lang.c
+    ${PROJECT_SOURCE_DIR}/src/core/locale.c
     ${PROJECT_SOURCE_DIR}/src/core/random.c
+    ${PROJECT_SOURCE_DIR}/src/core/smacker.c
     ${PROJECT_SOURCE_DIR}/src/core/string.c
     ${PROJECT_SOURCE_DIR}/src/core/time.c
     ${PROJECT_SOURCE_DIR}/src/core/zip.c
@@ -202,6 +226,7 @@ set(BUILDING_FILES
     ${PROJECT_SOURCE_DIR}/src/building/construction.c
     ${PROJECT_SOURCE_DIR}/src/building/construction_building.c
     ${PROJECT_SOURCE_DIR}/src/building/construction_clear.c
+    ${PROJECT_SOURCE_DIR}/src/building/construction_routed.c
     ${PROJECT_SOURCE_DIR}/src/building/construction_warning.c
     ${PROJECT_SOURCE_DIR}/src/building/count.c
     ${PROJECT_SOURCE_DIR}/src/building/destruction.c
@@ -284,6 +309,7 @@ set(FIGURETYPE_FILES
     ${PROJECT_SOURCE_DIR}/src/figuretype/cartpusher.c
     ${PROJECT_SOURCE_DIR}/src/figuretype/crime.c
     ${PROJECT_SOURCE_DIR}/src/figuretype/docker.c
+    ${PROJECT_SOURCE_DIR}/src/figuretype/editor.c
     ${PROJECT_SOURCE_DIR}/src/figuretype/enemy.c
     ${PROJECT_SOURCE_DIR}/src/figuretype/entertainer.c
     ${PROJECT_SOURCE_DIR}/src/figuretype/maintenance.c
@@ -301,6 +327,7 @@ set(GAME_FILES
     ${PROJECT_SOURCE_DIR}/src/game/animation.c
     ${PROJECT_SOURCE_DIR}/src/game/difficulty.c
     ${PROJECT_SOURCE_DIR}/src/game/file.c
+    ${PROJECT_SOURCE_DIR}/src/game/file_editor.c
     ${PROJECT_SOURCE_DIR}/src/game/file_io.c
     ${PROJECT_SOURCE_DIR}/src/game/game.c
     ${PROJECT_SOURCE_DIR}/src/game/mission.c
@@ -319,6 +346,7 @@ set(INPUT_FILES
     ${PROJECT_SOURCE_DIR}/src/input/keyboard.c
     ${PROJECT_SOURCE_DIR}/src/input/mouse.c
     ${PROJECT_SOURCE_DIR}/src/input/scroll.c
+    ${PROJECT_SOURCE_DIR}/src/input/touch.c
 )
 set(MAP_FILES
     ${PROJECT_SOURCE_DIR}/src/map/aqueduct.c
@@ -358,6 +386,9 @@ set(SCENARIO_FILES
     ${PROJECT_SOURCE_DIR}/src/scenario/demand_change.c
     ${PROJECT_SOURCE_DIR}/src/scenario/distant_battle.c
     ${PROJECT_SOURCE_DIR}/src/scenario/earthquake.c
+    ${PROJECT_SOURCE_DIR}/src/scenario/editor.c
+    ${PROJECT_SOURCE_DIR}/src/scenario/editor_events.c
+    ${PROJECT_SOURCE_DIR}/src/scenario/editor_map.c
     ${PROJECT_SOURCE_DIR}/src/scenario/emperor_change.c
     ${PROJECT_SOURCE_DIR}/src/scenario/empire.c
     ${PROJECT_SOURCE_DIR}/src/scenario/gladiator_revolt.c
@@ -408,9 +439,14 @@ set(WIDGET_FILES
     ${PROJECT_SOURCE_DIR}/src/widget/city_overlay_risks.c
     ${PROJECT_SOURCE_DIR}/src/widget/city_with_overlay.c
     ${PROJECT_SOURCE_DIR}/src/widget/city_without_overlay.c
+    ${PROJECT_SOURCE_DIR}/src/widget/input_box.c
+    ${PROJECT_SOURCE_DIR}/src/widget/map_editor.c
+    ${PROJECT_SOURCE_DIR}/src/widget/map_editor_tool.c
     ${PROJECT_SOURCE_DIR}/src/widget/minimap.c
     ${PROJECT_SOURCE_DIR}/src/widget/sidebar.c
+    ${PROJECT_SOURCE_DIR}/src/widget/sidebar_editor.c
     ${PROJECT_SOURCE_DIR}/src/widget/top_menu.c
+    ${PROJECT_SOURCE_DIR}/src/widget/top_menu_editor.c
 )
 set(WINDOW_FILES
     ${PROJECT_SOURCE_DIR}/src/window/advisors.c
@@ -438,8 +474,26 @@ set(WINDOW_FILES
     ${PROJECT_SOURCE_DIR}/src/window/building/military.c
     ${PROJECT_SOURCE_DIR}/src/window/building/terrain.c
     ${PROJECT_SOURCE_DIR}/src/window/building/utility.c
+    ${PROJECT_SOURCE_DIR}/src/window/editor/allowed_buildings.c
+    ${PROJECT_SOURCE_DIR}/src/window/editor/attributes.c
+    ${PROJECT_SOURCE_DIR}/src/window/editor/build_menu.c
+    ${PROJECT_SOURCE_DIR}/src/window/editor/demand_changes.c
+    ${PROJECT_SOURCE_DIR}/src/window/editor/edit_demand_change.c
+    ${PROJECT_SOURCE_DIR}/src/window/editor/edit_invasion.c
+    ${PROJECT_SOURCE_DIR}/src/window/editor/edit_price_change.c
+    ${PROJECT_SOURCE_DIR}/src/window/editor/edit_request.c
+    ${PROJECT_SOURCE_DIR}/src/window/editor/empire.c
+    ${PROJECT_SOURCE_DIR}/src/window/editor/invasions.c
+    ${PROJECT_SOURCE_DIR}/src/window/editor/map.c
+    ${PROJECT_SOURCE_DIR}/src/window/editor/price_changes.c
+    ${PROJECT_SOURCE_DIR}/src/window/editor/requests.c
+    ${PROJECT_SOURCE_DIR}/src/window/editor/special_events.c
+    ${PROJECT_SOURCE_DIR}/src/window/editor/start_year.c
+    ${PROJECT_SOURCE_DIR}/src/window/editor/starting_conditions.c
+    ${PROJECT_SOURCE_DIR}/src/window/editor/win_criteria.c
     ${PROJECT_SOURCE_DIR}/src/window/cck_selection.c
     ${PROJECT_SOURCE_DIR}/src/window/city.c
+    ${PROJECT_SOURCE_DIR}/src/window/config.c
     ${PROJECT_SOURCE_DIR}/src/window/difficulty_options.c
     ${PROJECT_SOURCE_DIR}/src/window/display_options.c
     ${PROJECT_SOURCE_DIR}/src/window/donate_to_city.c
@@ -448,6 +502,7 @@ set(WINDOW_FILES
     ${PROJECT_SOURCE_DIR}/src/window/gift_to_emperor.c
     ${PROJECT_SOURCE_DIR}/src/window/hold_festival.c
     ${PROJECT_SOURCE_DIR}/src/window/intermezzo.c
+    ${PROJECT_SOURCE_DIR}/src/window/intro_video.c
     ${PROJECT_SOURCE_DIR}/src/window/labor_priority.c
     ${PROJECT_SOURCE_DIR}/src/window/logo.c
     ${PROJECT_SOURCE_DIR}/src/window/main_menu.c
@@ -457,9 +512,12 @@ set(WINDOW_FILES
     ${PROJECT_SOURCE_DIR}/src/window/mission_end.c
     ${PROJECT_SOURCE_DIR}/src/window/mission_selection.c
     ${PROJECT_SOURCE_DIR}/src/window/new_career.c
+    ${PROJECT_SOURCE_DIR}/src/window/numeric_input.c
     ${PROJECT_SOURCE_DIR}/src/window/overlay_menu.c
+    ${PROJECT_SOURCE_DIR}/src/window/plain_message_dialog.c
     ${PROJECT_SOURCE_DIR}/src/window/popup_dialog.c
     ${PROJECT_SOURCE_DIR}/src/window/resource_settings.c
+    ${PROJECT_SOURCE_DIR}/src/window/select_list.c
     ${PROJECT_SOURCE_DIR}/src/window/set_salary.c
     ${PROJECT_SOURCE_DIR}/src/window/sound_options.c
     ${PROJECT_SOURCE_DIR}/src/window/speed_options.c
@@ -468,14 +526,18 @@ set(WINDOW_FILES
     ${PROJECT_SOURCE_DIR}/src/window/victory_dialog.c
     ${PROJECT_SOURCE_DIR}/src/window/victory_video.c
 )
+set(EDITOR_FILES
+    ${PROJECT_SOURCE_DIR}/src/editor/editor.c
+    ${PROJECT_SOURCE_DIR}/src/editor/tool.c
+    ${PROJECT_SOURCE_DIR}/src/editor/tool_restriction.c
+)
 
 set(MACOSX_FILES "")
 if(APPLE)
     set(MACOSX_FILES ${PROJECT_SOURCE_DIR}/res/julius.icns)
 endif()
 
-add_executable(julius
-    WIN32
+set(SOURCE_FILES
     ${PLATFORM_FILES}
     ${CORE_FILES}
     ${BUILDING_FILES}
@@ -491,14 +553,39 @@ add_executable(julius
     ${SOUND_FILES}
     ${WIDGET_FILES}
     ${WINDOW_FILES}
-    ${SMK_FILES}
+    ${EDITOR_FILES}
+    ${PNG_FILES}
     ${TINYFD_FILES}
+    ${ZLIB_FILES}
     ${PROJECT_SOURCE_DIR}/res/julius.rc
     ${MACOSX_FILES}
 )
 
+function(GET_SDL_EXT_DIR result module)
+    if(NOT module STREQUAL "")
+        set(module "_${module}")
+    endif()
+    set(SDL_LOCATION ${PROJECT_SOURCE_DIR}/ext/SDL2)
+    file(GLOB children
+        RELATIVE ${SDL_LOCATION}
+        CONFIGURE_DEPENDS
+        ${SDL_LOCATION}/SDL${module}
+        ${SDL_LOCATION}/SDL2${module}
+        ${SDL_LOCATION}/SDL${module}-*
+        ${SDL_LOCATION}/SDL2${module}-*
+    )
+    foreach(child ${children})
+        if(IS_DIRECTORY "${SDL_LOCATION}/${child}")
+            set(${result} "${SDL_LOCATION}/${child}" PARENT_SCOPE)
+            break()
+        endif()
+    endforeach()
+endfunction()
+
 find_package(SDL2 REQUIRED)
 find_package(SDL2_mixer REQUIRED)
+
+add_executable(${SHORT_NAME} WIN32 ${SOURCE_FILES})
 
 if(MSVC)
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
@@ -537,6 +624,15 @@ if(APPLE)
         MACOSX_BUNDLE_INFO_PLIST "${PROJECT_SOURCE_DIR}/res/Info.plist.in")
 
     set(DIRS "")
+
+    # if SDL2 library is a framework, we need to indicate to CMake
+    # the path to its dependencies. SDL2_LIBRARY contains two parts.
+    # Example: /Library/Frameworks/SDL2.framework;-framework Cocoa
+    # So strip out everything after the ';'
+    string(REGEX REPLACE ";.*$" "" SDL2_LIB_DIR "${SDL2_LIBRARY}")
+    if(EXISTS "${SDL2_LIB_DIR}/Versions/A/Frameworks")
+        set(DIRS "${DIRS};${SDL2_LIB_DIR}/Versions/A/Frameworks")
+    endif()
 
     # if SDL2_mixer library is a framework, we need to indicate to CMake
     # the path to its dependencies (Ogg.framework etc):
@@ -600,7 +696,9 @@ if (VITA_BUILD)
         ScePgf_stub
         SceAppMgr_stub
     )
-
+    # this setting enables larger heap memory sizes on Vita, up to ~330 MB
+    # useful for pre-loading videos into memory
+    set(VITA_MKSFOEX_FLAGS "${VITA_MKSFOEX_FLAGS} -d ATTRIBUTE2=12")
     vita_create_self(${SHORT_NAME}.self ${SHORT_NAME} UNSAFE UNCOMPRESSED)
     vita_create_vpk(${SHORT_NAME}.vpk ${VITA_TITLEID} ${SHORT_NAME}.self
         VERSION ${VITA_VERSION}
@@ -625,6 +723,8 @@ elseif(SWITCH_BUILD)
         modplug
         mpg123
         FLAC
+        opusfile
+        opus
         ogg
         jpeg
         png
@@ -669,12 +769,25 @@ elseif(SWITCH_BUILD)
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     )
 else()
+    if (UNIX AND NOT APPLE AND (CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang"))
+        target_link_libraries(${SHORT_NAME} m)
+    endif()
     target_link_libraries (${SHORT_NAME} ${SDL2_LIBRARY} ${SDL2_MIXER_LIBRARY})
     if(NOT APPLE)
         install(TARGETS ${SHORT_NAME} RUNTIME DESTINATION bin)
     endif()
 
+    if(UNIX AND NOT APPLE)
+        install(FILES "res/julius.desktop" DESTINATION "share/applications" RENAME "com.github.bvschaik.julius.desktop")
+        install(FILES "res/julius.metainfo.xml" DESTINATION "share/metainfo" RENAME "com.github.bvschaik.julius.metainfo.xml")
+        install(FILES "res/julius_48.png" DESTINATION "share/icons/hicolor/48x48/apps" RENAME "com.github.bvschaik.julius.png")
+        install(FILES "res/julius_256.png" DESTINATION "share/icons/hicolor/256x256/apps" RENAME "com.github.bvschaik.julius.png")
+        install(FILES "res/julius_512.png" DESTINATION "share/icons/hicolor/512x512/apps" RENAME "com.github.bvschaik.julius.png")
+    endif()
+
     # Unit tests
-    enable_testing()
-    add_subdirectory(test)
+    if(NOT VITA_BUILD AND NOT SWITCH_BUILD)
+        enable_testing()
+        add_subdirectory(test)
+    endif()
 endif()

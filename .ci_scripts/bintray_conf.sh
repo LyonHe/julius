@@ -3,17 +3,63 @@
 build_dir="$(pwd)/build"
 
 VERSION=$(cat res/version.txt)
+if [[ ! -z "$TRAVIS_TAG" ]]
+then
+  REPO=Augustus
+  NAME_SUFFIX=-release
+elif [[ "$TRAVIS_BRANCH" == "master" ]]
+then
+  REPO=Augustus
+  NAME_SUFFIX=-unstable
+elif [[ "$TRAVIS_BRANCH" =~ ^feature/ ]]
+then
+  REPO=Augustus-branches
+  NAME_SUFFIX=
+  VERSION=${TRAVIS_BRANCH##feature/}-$VERSION
+else
+  echo "Unknown branch type $TRAVIS_BRANCH - skipping deploy to Bintray"
+  exit
+fi
 
-if [ "$DEPLOY" = "mac" ]
+# Linux portable binary: https://appimage.org/
+if [ "$DEPLOY" = "appimage" ]
 then
 cat > "bintray.json" <<EOF
 {
   "package": {
-    "subject": "bvschaik",
-    "repo": "julius",
-    "name": "mac-unstable",
+    "subject": "keriew",
+    "repo": "$REPO",
+    "name": "linux$NAME_SUFFIX",
     "licenses": ["AGPL-V3"],
-    "vcs_url": "https://github.com/bvschaik/julius.git"
+    "vcs_url": "https://github.com/Keriew/julius.git"
+  },
+
+  "version": {
+    "name": "$VERSION",
+    "released": "$(date +'%Y-%m-%d')",
+    "desc": "Automated Linux AppImage build for Travis-CI job: $TRAVIS_JOB_WEB_URL"
+  },
+
+  "files": [
+    {
+      "includePattern": "${build_dir}/julius.AppImage",
+      "uploadPattern": "julius-$VERSION-linux.AppImage"
+    }
+  ],
+
+  "publish": true
+}
+EOF
+elif [ "$DEPLOY" = "mac" ]
+then
+cat > "bintray.json" <<EOF
+{
+  "package": {
+    "subject": "keriew",
+    "repo": "$REPO",
+    "name": "mac$NAME_SUFFIX",
+    "licenses": ["AGPL-V3"],
+    "vcs_url": "https://github.com/Keriew/julius.git"
   },
 
   "version": {
@@ -25,7 +71,8 @@ cat > "bintray.json" <<EOF
   "files": [
     {
       "includePattern": "${build_dir}/julius.dmg",
-      "uploadPattern": "julius-$VERSION.dmg"
+      "uploadPattern": "julius-$VERSION-mac.dmg",
+      "listInDownloads": true
     }
   ],
 
@@ -37,11 +84,11 @@ then
 cat > "bintray.json" <<EOF
 {
   "package": {
-    "subject": "bvschaik",
-    "repo": "julius",
-    "name": "vita-unstable",
+    "subject": "keriew",
+    "repo": "$REPO",
+    "name": "vita$NAME_SUFFIX",
     "licenses": ["AGPL-V3"],
-    "vcs_url": "https://github.com/bvschaik/julius.git"
+    "vcs_url": "https://github.com/Keriew/julius.git"
   },
 
   "version": {
@@ -53,7 +100,8 @@ cat > "bintray.json" <<EOF
   "files": [
     {
       "includePattern": "${build_dir}/julius.vpk",
-      "uploadPattern": "julius-$VERSION.vpk"
+      "uploadPattern": "julius-$VERSION-vita.vpk",
+      "listInDownloads": true
     }
   ],
 
@@ -65,11 +113,11 @@ then
 cat > "bintray.json" <<EOF
 {
   "package": {
-    "subject": "bvschaik",
-    "repo": "julius",
-    "name": "switch-unstable",
+    "subject": "keriew",
+    "repo": "$REPO",
+    "name": "switch$NAME_SUFFIX",
     "licenses": ["AGPL-V3"],
-    "vcs_url": "https://github.com/bvschaik/julius.git"
+    "vcs_url": "https://github.com/Keriew/julius.git"
   },
 
   "version": {
@@ -80,8 +128,9 @@ cat > "bintray.json" <<EOF
 
   "files": [
     {
-      "includePattern": "${build_dir}/julius_switch.zip",
-      "uploadPattern": "julius-$VERSION.zip"
+      "includePattern": "${build_dir}/julius.zip",
+      "uploadPattern": "julius-$VERSION-switch.zip",
+      "listInDownloads": true
     }
   ],
 

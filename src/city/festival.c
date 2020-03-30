@@ -6,6 +6,7 @@
 #include "city/finance.h"
 #include "city/message.h"
 #include "city/sentiment.h"
+#include "core/config.h"
 
 int city_festival_is_planned(void)
 {
@@ -111,7 +112,12 @@ static void throw_party(void)
     switch (city_data.festival.planned.size) {
         case FESTIVAL_SMALL: city_message_post(1, MESSAGE_SMALL_FESTIVAL, 0, 0); break;
         case FESTIVAL_LARGE: city_message_post(1, MESSAGE_LARGE_FESTIVAL, 0, 0); break;
-        case FESTIVAL_GRAND: city_message_post(1, MESSAGE_GRAND_FESTIVAL, 0, 0); break;
+        case FESTIVAL_GRAND: 
+            city_message_post(1, MESSAGE_GRAND_FESTIVAL, 0, 0); 
+	        if (config_get(CONFIG_GP_CH_GRANDFESTIVAL)) {
+                city_data.religion.gods[city_data.festival.planned.god].blessing_done = 0;
+	        }
+            break;
     }
     city_data.festival.planned.size = FESTIVAL_NONE;
     city_data.festival.planned.months_to_go = 0;

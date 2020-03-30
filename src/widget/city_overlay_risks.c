@@ -250,7 +250,7 @@ const city_overlay *city_overlay_for_problems(void)
 static int terrain_on_native_overlay(void)
 {
     return
-        TERRAIN_TREE | TERRAIN_ROCK | TERRAIN_WATER | TERRAIN_SCRUB |
+        TERRAIN_TREE | TERRAIN_ROCK | TERRAIN_WATER | TERRAIN_SHRUB |
         TERRAIN_GARDEN | TERRAIN_ELEVATION | TERRAIN_ACCESS_RAMP | TERRAIN_RUBBLE;
 }
 
@@ -287,7 +287,11 @@ static void draw_top_native(int x, int y, int grid_offset)
     }
     if (map_terrain_is(grid_offset, terrain_on_native_overlay())) {
         if (!map_terrain_is(grid_offset, TERRAIN_BUILDING)) {
-            image_draw_isometric_top_from_draw_tile(map_image_at(grid_offset), x, y, 0);
+            color_t color_mask = 0;
+            if (map_property_is_deleted(grid_offset) && map_property_multi_tile_size(grid_offset) == 1) {
+                color_mask = COLOR_MASK_RED;
+            }
+            image_draw_isometric_top_from_draw_tile(map_image_at(grid_offset), x, y, color_mask);
         }
     } else if (map_building_at(grid_offset)) {
         city_with_overlay_draw_building_top(x, y, grid_offset);

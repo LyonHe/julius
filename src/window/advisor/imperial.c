@@ -36,14 +36,14 @@ static void button_gift_to_emperor(int param1, int param2);
 static void button_request(int index, int param2);
 
 static generic_button imperial_buttons[] = {
-    {320, 367, 570, 387, GB_IMMEDIATE, button_donate_to_city, button_none, 0, 0},
-    {70, 393, 570, 413, GB_IMMEDIATE, button_set_salary, button_none, 0, 0},
-    {320, 341, 570, 361, GB_IMMEDIATE, button_gift_to_emperor, button_none, 0, 0},
-    {38, 96, 598, 136, GB_IMMEDIATE, button_request, button_none, 0, 0},
-    {38, 138, 598, 178, GB_IMMEDIATE, button_request, button_none, 1, 0},
-    {38, 180, 598, 220, GB_IMMEDIATE, button_request, button_none, 2, 0},
-    {38, 222, 598, 262, GB_IMMEDIATE, button_request, button_none, 3, 0},
-    {38, 264, 598, 304, GB_IMMEDIATE, button_request, button_none, 4, 0},
+    {320, 367, 250, 20, button_donate_to_city, button_none, 0, 0},
+    {70, 393, 500, 20, button_set_salary, button_none, 0, 0},
+    {320, 341, 250, 20, button_gift_to_emperor, button_none, 0, 0},
+    {38, 96, 560, 40, button_request, button_none, 0, 0},
+    {38, 138, 560, 40, button_request, button_none, 1, 0},
+    {38, 180, 560, 40, button_request, button_none, 2, 0},
+    {38, 222, 560, 40, button_request, button_none, 3, 0},
+    {38, 264, 560, 40, button_request, button_none, 4, 0},
 };
 
 static int focus_button_id;
@@ -109,7 +109,7 @@ static int draw_background(void)
         button_border_draw(38, 96, 560, 40, 0);
         image_draw(image_group(GROUP_RESOURCE_ICONS) + RESOURCE_WEAPONS, 50, 106);
         width = lang_text_draw(52, 72, 80, 102, FONT_NORMAL_WHITE);
-        lang_text_draw(21, empire_city_get(city_military_distant_battle_city())->name_id, 50 + width, 102, FONT_NORMAL_WHITE);
+        lang_text_draw(21, empire_city_get(city_military_distant_battle_city())->name_id, 80 + width, 102, FONT_NORMAL_WHITE);
         int strength_text_id;
         int enemy_strength = city_military_distant_battle_enemy_strength();
         if (enemy_strength < 46) {
@@ -200,9 +200,9 @@ static void draw_foreground(void)
     }
 }
 
-static void handle_mouse(const mouse *m)
+static int handle_mouse(const mouse *m)
 {
-    generic_buttons_handle_mouse(m, 0, 0, imperial_buttons, 8, &focus_button_id);
+    return generic_buttons_handle_mouse(m, 0, 0, imperial_buttons, 8, &focus_button_id);
 }
 
 static void button_donate_to_city(int param1, int param2)

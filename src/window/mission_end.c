@@ -27,7 +27,7 @@
 static void button_fired(int param1, int param2);
 
 static generic_button fired_buttons[] = {
-    {64, 208, 384, 228, GB_IMMEDIATE, button_fired, button_none, 0, 0},
+    {80, 224, 480, 25, button_fired, button_none, 0, 0},
 };
 
 static int focus_button_id;
@@ -51,23 +51,25 @@ static void draw_won(void)
     } else {
         lang_text_draw_multiline(147, scenario_campaign_mission(), 80, 192, 496, FONT_NORMAL_WHITE);
     }
-    int width = lang_text_draw(148, 0, 88, 308, FONT_NORMAL_BLACK);
-    text_draw_number(city_rating_culture(), '@', " ", 88 + width, 308, FONT_NORMAL_BLACK);
+    int left_offset = 68;
+    int right_offset = 316;
+    int width = lang_text_draw(148, 0, left_offset, 308, FONT_NORMAL_BLACK);
+    text_draw_number(city_rating_culture(), '@', " ", left_offset + width, 308, FONT_NORMAL_BLACK);
 
-    width = lang_text_draw(148, 1, 348, 308, FONT_NORMAL_BLACK);
-    text_draw_number(city_rating_prosperity(), '@', " ", 348 + width, 308, FONT_NORMAL_BLACK);
+    width = lang_text_draw(148, 1, right_offset, 308, FONT_NORMAL_BLACK);
+    text_draw_number(city_rating_prosperity(), '@', " ", right_offset + width, 308, FONT_NORMAL_BLACK);
 
-    width = lang_text_draw(148, 2, 88, 328, FONT_NORMAL_BLACK);
-    text_draw_number(city_rating_peace(), '@', " ", 88 + width, 328, FONT_NORMAL_BLACK);
+    width = lang_text_draw(148, 2, left_offset, 328, FONT_NORMAL_BLACK);
+    text_draw_number(city_rating_peace(), '@', " ", left_offset + width, 328, FONT_NORMAL_BLACK);
 
-    width = lang_text_draw(148, 3, 348, 328, FONT_NORMAL_BLACK);
-    text_draw_number(city_rating_favor(), '@', " ", 348 + width, 328, FONT_NORMAL_BLACK);
+    width = lang_text_draw(148, 3, right_offset, 328, FONT_NORMAL_BLACK);
+    text_draw_number(city_rating_favor(), '@', " ", right_offset + width, 328, FONT_NORMAL_BLACK);
 
-    width = lang_text_draw(148, 4, 88, 348, FONT_NORMAL_BLACK);
-    text_draw_number(city_population(), '@', " ", 88 + width, 348, FONT_NORMAL_BLACK);
+    width = lang_text_draw(148, 4, left_offset, 348, FONT_NORMAL_BLACK);
+    text_draw_number(city_population(), '@', " ", left_offset + width, 348, FONT_NORMAL_BLACK);
 
-    width = lang_text_draw(148, 5, 348, 348, FONT_NORMAL_BLACK);
-    text_draw_number(city_finance_treasury(), '@', " ", 348 + width, 348, FONT_NORMAL_BLACK);
+    width = lang_text_draw(148, 5, right_offset, 348, FONT_NORMAL_BLACK);
+    text_draw_number(city_finance_treasury(), '@', " ", right_offset + width, 348, FONT_NORMAL_BLACK);
 
     lang_text_draw_centered(13, 1, 64, 388, 512, FONT_NORMAL_BLACK);
 }
@@ -97,6 +99,7 @@ static void advance_to_next_mission(void)
 {
     setting_set_personal_savings_for_mission(scenario_campaign_rank() + 1, city_emperor_personal_savings());
     scenario_set_campaign_rank(scenario_campaign_rank() + 1);
+    scenario_save_campaign_player_name();
 
     city_victory_stop_governing();
 
@@ -104,7 +107,7 @@ static void advance_to_next_mission(void)
     game_state_reset_overlay();
 
     if (scenario_campaign_rank() >= 11 || scenario_is_custom()) {
-        window_main_menu_show();
+        window_main_menu_show(1);
         if (!scenario_is_custom()) {
             setting_clear_personal_savings();
             scenario_settings_init();
@@ -125,17 +128,19 @@ static void handle_mouse(const mouse *m)
             advance_to_next_mission();
         }
     } else {
-        generic_buttons_handle_mouse(mouse_in_dialog(m), 48, 16,
+        generic_buttons_handle_mouse(mouse_in_dialog(m), 0, 0,
                                      fired_buttons, 1, &focus_button_id);
     }
 }
 
 static void button_fired(int param1, int param2)
 {
+    sound_music_stop();
+    sound_speech_stop();
     city_victory_stop_governing();
     game_undo_disable();
     if (scenario_is_custom()) {
-        window_main_menu_show();
+        window_main_menu_show(1);
     } else {
         window_mission_selection_show();
     }
@@ -155,7 +160,6 @@ static void show_end_dialog(void)
 
 static void show_intermezzo(void)
 {
-    sound_music_reset();
     window_intermezzo_show(INTERMEZZO_WON, show_end_dialog);
 }
 

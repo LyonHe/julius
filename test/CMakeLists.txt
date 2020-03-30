@@ -36,9 +36,9 @@ add_executable(autopilot
     stub/log.c
     stub/model.c
     stub/sound_device.c
-    stub/system.c
     stub/ui.c
     stub/video.c
+    ${PROJECT_SOURCE_DIR}/src/platform/file_manager.c
     ${TEST_CORE_FILES}
     ${TEST_BUILDING_FILES}
     ${CITY_FILES}
@@ -49,6 +49,7 @@ add_executable(autopilot
     ${MAP_FILES}
     ${SCENARIO_FILES}
     ${SOUND_FILES}
+    ${EDITOR_FILES}
 )
 
 file(COPY data/c3.emp DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
@@ -78,11 +79,17 @@ add_integration_test(sav_invasion3 inv0.sav inv3.sav 5105)
 add_integration_test(sav_invasion4 inv0.sav inv4.sav 6777)
 add_integration_test(sav_invasion5 inv0.sav inv5.sav 8563)
 
+# Distant battle
+add_integration_test(sav_distantbattle1 db-fort1.sav db-fort1-done.sav 6328)
+add_integration_test(sav_distantbattle2 db-fort2.sav db-fort2-done.sav 6335)
+add_integration_test(sav_distantbattle3 db-fort2.sav db-fort2-done2.sav 11197)
+
 # Routing table full kills figures
 add_integration_test(sav_routing_full routing-full.sav routing-full-kill.sav 7)
 
 # God curses
-add_integration_test(sav_curses curses.sav curses-done.sav 13350)
+add_integration_test(sav_curses1 curses.sav curses-done.sav 13350)
+add_integration_test(sav_curses2 mars-wrath.sav mars-wrath-after.sav 1016)
 
 # Earthquake destroying buildings
 add_integration_test(sav_earthquake0 earthquake.sav earthquake-start.sav 371)
@@ -97,3 +104,16 @@ add_integration_test(sav_edge1 edge-start.sav edge-battle-before.sav 835)
 add_integration_test(sav_edge2 edge-start.sav edge-battle-start.sav 1278)
 add_integration_test(sav_edge3 edge-start.sav edge-battle-during.sav 1513)
 add_integration_test(sav_edge4 edge-start.sav edge-battle-after.sav 1890)
+
+# Test with bigger cities
+add_integration_test(sav_massilia1 brugle-massilia-start.sav brugle-massilia-1.sav 4)
+add_integration_test(sav_massilia2 brugle-massilia-start.sav brugle-massilia-2.sav 57)
+add_integration_test(sav_massilia3 brugle-massilia-start.sav brugle-massilia-3.sav 391)
+
+add_integration_test(sav_valentia1 valentia57.sav valentia57-after.sav 1026)
+add_integration_test(sav_lugdunum1 brugle-lugdunum.sav brugle-lugdunum-after.sav 1176)
+
+add_integration_test(sav_native1 brugle-lugdunum-native.sav brugle-lugdunum-native-after.sav 1678)
+add_integration_test(sav_native2 cicero-lugdunum-trade.sav cicero-lugdunum-trade-after.sav 926)
+
+add_integration_test(sav_palace1 brugle-palacepeaks.sav brugle-palacepeaks-2.sav 2562)

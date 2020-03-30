@@ -4,6 +4,7 @@
 #include "city/view.h"
 #include "map/building.h"
 #include "map/elevation.h"
+#include "map/grid.h"
 #include "map/property.h"
 #include "map/terrain.h"
 
@@ -307,6 +308,16 @@ void map_image_context_init(void)
     }
 }
 
+void map_image_context_reset_water(void)
+{
+    clear_current_offset(context_pointers[CONTEXT_WATER].context, context_pointers[CONTEXT_WATER].size);
+}
+
+void map_image_context_reset_elevation(void)
+{
+    clear_current_offset(context_pointers[CONTEXT_ELEVATION].context, context_pointers[CONTEXT_ELEVATION].size);
+}
+
 static int context_matches_tiles(const struct terrain_image_context *context, const int tiles[MAX_TILES])
 {
     for (int i = 0; i < MAX_TILES; i++) {
@@ -401,6 +412,14 @@ static void set_tiles_road(int grid_offset, int tiles[MAX_TILES])
                 b->subtype.orientation == 1 + ((i / 2) & 1)) { // 1,2,1,2
                 tiles[i] = 1;
             }
+        } else if (map_terrain_is(offset, TERRAIN_BUILDING)) {
+            building *b = building_get(map_building_at(offset));
+            if (b->type == BUILDING_GRANARY) {
+                tiles[i]  = (offset == b->grid_offset + map_grid_delta(1, 0)) ? 1 : 0;
+                tiles[i] |= (offset == b->grid_offset + map_grid_delta(0, 1)) ? 1 : 0;
+                tiles[i] |= (offset == b->grid_offset + map_grid_delta(2, 1)) ? 1 : 0;
+                tiles[i] |= (offset == b->grid_offset + map_grid_delta(1, 2)) ? 1 : 0;
+            }
         }
     }
 }
@@ -419,14 +438,32 @@ const terrain_image *map_image_context_get_paved_road(int grid_offset)
     return get_image(CONTEXT_PAVED_ROAD, tiles);
 }
 
-static void set_terrain_reservoir(int grid_offset, int index, int multi_tile_mask, int tiles[MAX_TILES])
+static int is_reservoir_construction_entrance(int grid_offset)
+{
+    if (!map_property_is_constructing(grid_offset)) {
+        return 0;
+    }
+    if (map_property_is_constructing(grid_offset + CONTEXT_TILE_OFFSETS[0]) && map_property_is_constructing(grid_offset + CONTEXT_TILE_OFFSETS[4])) {
+        return !map_property_is_constructing(grid_offset + 2 * CONTEXT_TILE_OFFSETS[0]) || !map_property_is_constructing(grid_offset + 2 * CONTEXT_TILE_OFFSETS[4]);
+    }
+    if (map_property_is_constructing(grid_offset + CONTEXT_TILE_OFFSETS[2]) && map_property_is_constructing(grid_offset + CONTEXT_TILE_OFFSETS[6])) {
+        return !map_property_is_constructing(grid_offset + 2 * CONTEXT_TILE_OFFSETS[2]) || !map_property_is_constructing(grid_offset + 2 * CONTEXT_TILE_OFFSETS[6]);
+    }
+    return 0;
+}
+
+static void set_terrain_reservoir(int grid_offset, int index, int multi_tile_mask, int tiles[MAX_TILES], int include_construction)
 {
     int offset = grid_offset + CONTEXT_TILE_OFFSETS[index];
     if (map_terrain_is(offset, TERRAIN_BUILDING)) {
         building *b = building_get(map_building_at(offset));
         if (b->type == BUILDING_RESERVOIR && map_property_multi_tile_xy(offset) == multi_tile_mask) {
             tiles[index] = 1;
+            return;
         }
+    }
+    if (include_construction && is_reservoir_construction_entrance(offset)) {
+        tiles[index] = 1;
     }
 }
 
@@ -446,16 +483,9 @@ const terrain_image *map_image_context_get_aqueduct(int grid_offset, int include
             }
         }
     }
-    set_terrain_reservoir(grid_offset, 0, EDGE_X1Y2, tiles);
-    set_terrain_reservoir(grid_offset, 2, EDGE_X0Y1, tiles);
-    set_terrain_reservoir(grid_offset, 4, EDGE_X1Y0, tiles);
-    set_terrain_reservoir(grid_offset, 6, EDGE_X2Y1, tiles);
-    if (include_construction) {
-        for (int i = 0; i < MAX_TILES; i += 2) {
-            if (map_property_is_constructing(grid_offset + CONTEXT_TILE_OFFSETS[i])) {
-                tiles[i] = 1;
-            }
-        }
-    }
+    set_terrain_reservoir(grid_offset, 0, EDGE_X1Y2, tiles, include_construction);
+    set_terrain_reservoir(grid_offset, 2, EDGE_X0Y1, tiles, include_construction);
+    set_terrain_reservoir(grid_offset, 4, EDGE_X1Y0, tiles, include_construction);
+    set_terrain_reservoir(grid_offset, 6, EDGE_X2Y1, tiles, include_construction);
     return get_image(CONTEXT_AQUEDUCT, tiles);
 }

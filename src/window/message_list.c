@@ -2,6 +2,7 @@
 
 #include "city/message.h"
 #include "core/calc.h"
+#include "core/image_group.h"
 #include "core/lang.h"
 #include "graphics/generic_button.h"
 #include "graphics/graphics.h"
@@ -23,28 +24,28 @@ static void button_message(int param1, int param2);
 static void button_delete(int param1, int param2);
 
 static image_button image_button_help = {
-    0, 0, 27, 27, IB_NORMAL, 134, 0, button_help, button_none, 0, 0, 1
+    0, 0, 27, 27, IB_NORMAL, GROUP_CONTEXT_ICONS, 0, button_help, button_none, 0, 0, 1
 };
 static image_button image_button_close = {
-    0, 0, 24, 24, IB_NORMAL, 134, 4, button_close, button_none, 0, 0, 1
+    0, 0, 24, 24, IB_NORMAL, GROUP_CONTEXT_ICONS, 4, button_close, button_none, 0, 0, 1
 };
 static image_button image_button_scroll_up = {
-    0, 0, 39, 26, IB_SCROLL, 96, 8, button_scroll, button_none, 0, 1, 1
+    0, 0, 39, 26, IB_SCROLL, GROUP_OK_CANCEL_SCROLL_BUTTONS, 8, button_scroll, button_none, 0, 1, 1
 };
 static image_button image_button_scroll_down = {
-    0, 0, 39, 26, IB_SCROLL, 96, 12, button_scroll, button_none, 1, 1, 1
+    0, 0, 39, 26, IB_SCROLL, GROUP_OK_CANCEL_SCROLL_BUTTONS, 12, button_scroll, button_none, 1, 1, 1
 };
 static generic_button generic_buttons_messages[] = {
-    {0, 0, 412, 18, GB_ON_MOUSE_UP, button_message, button_delete, 0, 0},
-    {0, 20, 412, 38, GB_ON_MOUSE_UP, button_message, button_delete, 1, 0},
-    {0, 40, 412, 58, GB_ON_MOUSE_UP, button_message, button_delete, 2, 0},
-    {0, 60, 412, 78, GB_ON_MOUSE_UP, button_message, button_delete, 3, 0},
-    {0, 80, 412, 98, GB_ON_MOUSE_UP, button_message, button_delete, 4, 0},
-    {0, 100, 412, 118, GB_ON_MOUSE_UP, button_message, button_delete, 5, 0},
-    {0, 120, 412, 138, GB_ON_MOUSE_UP, button_message, button_delete, 6, 0},
-    {0, 140, 412, 158, GB_ON_MOUSE_UP, button_message, button_delete, 7, 0},
-    {0, 160, 412, 178, GB_ON_MOUSE_UP, button_message, button_delete, 8, 0},
-    {0, 180, 412, 198, GB_ON_MOUSE_UP, button_message, button_delete, 9, 0},
+    {0, 0, 412, 18, button_message, button_delete, 0, 0},
+    {0, 20, 412, 18, button_message, button_delete, 1, 0},
+    {0, 40, 412, 18, button_message, button_delete, 2, 0},
+    {0, 60, 412, 18, button_message, button_delete, 3, 0},
+    {0, 80, 412, 18, button_message, button_delete, 4, 0},
+    {0, 100, 412, 18, button_message, button_delete, 5, 0},
+    {0, 120, 412, 18, button_message, button_delete, 6, 0},
+    {0, 140, 412, 18, button_message, button_delete, 7, 0},
+    {0, 160, 412, 18, button_message, button_delete, 8, 0},
+    {0, 180, 412, 18, button_message, button_delete, 9, 0},
 };
 
 static struct {
@@ -103,9 +104,9 @@ static void draw_messages(int total_messages)
     int index = city_message_scroll_position();
     for (int i = 0; i < max; i++, index++) {
         const city_message *msg = city_message_get(index);
-        int message_id = city_message_get_text_id(msg->message_type);
+        const lang_message *lang_msg = lang_get_message(city_message_get_text_id(msg->message_type));
         int image_offset = 0;
-        if (lang_get_message(message_id)->message_type == MESSAGE_TYPE_DISASTER) {
+        if (lang_msg->message_type == MESSAGE_TYPE_DISASTER) {
             image_offset = 2;
         }
         if (msg->is_read) {
@@ -123,7 +124,7 @@ static void draw_messages(int total_messages)
         lang_text_draw_year(msg->year,
             data.x_text + 42 + width, data.y_text + 8 + 20 * i, font);
         text_draw(
-            lang_get_message(message_id)->title.text,
+            lang_msg->title.text,
             data.x_text + 180, data.y_text + 8 + 20 * i, font, 0);
     }
     if (city_message_can_scroll()) {
@@ -157,10 +158,10 @@ static void draw_foreground(void)
     graphics_reset_dialog();
 }
 
-static void handle_mouse_scrollbar(const mouse *m)
+static int handle_mouse_scrollbar(const mouse *m)
 {
     if (!city_message_can_scroll() || !m->left.is_down) {
-        return;
+        return 0;
     }
     int scrollbar_x = data.x_text + 16 * data.text_width_blocks + 1;
     int scrollbar_y = data.y_text + 26;
@@ -179,7 +180,9 @@ static void handle_mouse_scrollbar(const mouse *m)
             data.scroll_position_drag = 0;
         }
         window_invalidate();
+        return 1;
     }
+    return 0;
 }
 
 static void handle_mouse(const mouse *m)
@@ -221,7 +224,12 @@ static void handle_mouse(const mouse *m)
         }
         return;
     }
-    handle_mouse_scrollbar(m_dialog);
+    if (handle_mouse_scrollbar(m_dialog)) {
+        return;
+    }
+    if (m_dialog->right.went_up || (m->is_touch && m->left.double_click)) {
+        button_close(0, 0);
+    }
 }
 
 static void button_scroll(int is_down, int num_lines)
@@ -233,7 +241,7 @@ static void button_scroll(int is_down, int num_lines)
 
 static void button_help(int param1, int param2)
 {
-    window_message_dialog_show(MESSAGE_DIALOG_MESSAGES, 0);
+    window_message_dialog_show(MESSAGE_DIALOG_MESSAGES, window_city_draw_all);
 }
 
 static void button_close(int param1, int param2)
