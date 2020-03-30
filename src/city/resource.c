@@ -280,7 +280,7 @@ static void calculate_available_food(void)
         }
     }
     city_data.resource.food_needed_per_month =
-        calc_adjust_with_percentage(city_data.population.population, 50);
+        calc_adjust_with_percentage(city_data.population.population, 25);
     if (city_data.resource.food_needed_per_month > 0) {
         city_data.resource.food_supply_months =
             city_data.resource.granary_total_stored / city_data.resource.food_needed_per_month;
