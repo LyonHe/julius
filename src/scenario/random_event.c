@@ -132,10 +132,10 @@ void scenario_random_event_process(void)
             contaminate_water();
             break;
         case EVENT_IRON_MINE_COLLAPSED:
-            destroy_iron_mine();
+            //destroy_iron_mine();
             break;
         case EVENT_CLAY_PIT_FLOODED:
-            destroy_clay_pit();
+            //destroy_clay_pit();
             break;
     }
 }

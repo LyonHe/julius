@@ -141,9 +141,12 @@ void building_house_merge(building *house)
     if (house->house_is_merged) {
         return;
     }
+    //Always allow house merging
+    /*
     if ((map_random_get(house->grid_offset) & 7) >= 5) {
         return;
     }
+    */
     int num_house_tiles = 0;
     for (int i = 0; i < 4; i++) {
         int tile_offset = house->grid_offset + HOUSE_TILE_OFFSETS[i];
