@@ -359,6 +359,7 @@ static void determine_warehouseman_destination(figure *f, int road_network_id)
     if (dst_building_id) {
         set_destination(f, FIGURE_ACTION_51_WAREHOUSEMAN_DELIVERING_RESOURCE, dst_building_id, dst.x, dst.y);
         remove_resource_from_warehouse(f);
+        f->loads_sold_or_carrying = 1;
         return;
     }
     // priority 2: raw materials to workshop
@@ -367,6 +368,7 @@ static void determine_warehouseman_destination(figure *f, int road_network_id)
     if (dst_building_id) {
         set_destination(f, FIGURE_ACTION_51_WAREHOUSEMAN_DELIVERING_RESOURCE, dst_building_id, dst.x, dst.y);
         remove_resource_from_warehouse(f);
+        f->loads_sold_or_carrying = 1;
         return;
     }
     // priority 3: food to granary
@@ -531,6 +533,7 @@ void figure_warehouseman_action(figure *f)
                         break;
                     default: // workshop
                         building_workshop_add_raw_material(b);
+                        f->loads_sold_or_carrying -= 1;
                         break;
                 }
                 // BUG: what if warehouse/granary is full and returns false?

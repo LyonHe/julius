@@ -233,7 +233,8 @@ int empire_can_import_resource_from_city(int city_id, int resource)
     if (finished_good) {
         max_in_stock = 2 + 2 * building_count_industry_active(finished_good);
     }
-    return in_stock < max_in_stock ? 1 : 0;
+    //return in_stock < max_in_stock ? 1 : 0;
+    return 1;
 }
 
 void empire_save_state(buffer *buf)
