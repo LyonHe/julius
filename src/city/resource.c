@@ -342,7 +342,7 @@ void city_resource_consume_food(void)
         building *b = building_get(i);
         if (b->state == BUILDING_STATE_IN_USE && b->house_size) {
             int num_types = model_get_house(b->subtype.house_level)->food_types;
-            int amount_per_type = calc_adjust_with_percentage(b->house_population, 50);
+            int amount_per_type = calc_adjust_with_percentage(b->house_population, 25);
             if (num_types > 1) {
                 amount_per_type /= num_types;
             }

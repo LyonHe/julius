@@ -38,8 +38,8 @@ int building_granary_get_amount(building *granary, int resource)
     return granary->data.granary.resource_stored[resource];
 }
 
-int HALF_GRANARY = 1200;
-int QUARTER_GRANARY = 600;
+int HALF_GRANARY = 1600;
+int QUARTER_GRANARY = 800;
 
 int building_granary_is_accepting(int resource, building *b)
 {
