@@ -299,8 +299,18 @@ static void determine_granaryman_destination(figure *f, int road_network_id)
         f->resource_id, granary->distance_from_entry, road_network_id, 0,
         0, &dst);
     if (dst_building_id) {
+        int num_loads;
+        int stored = building_granary_get_amount(granary, f->resource_id);
+        if (stored < 800) {
+            num_loads = stored / 100;
+        } else {
+            num_loads = 8;
+        }
         set_destination(f, FIGURE_ACTION_51_WAREHOUSEMAN_DELIVERING_RESOURCE, dst_building_id, dst.x, dst.y);
-        building_granary_remove_resource(granary, f->resource_id, 100);
+        if(f->loads_sold_or_carrying <= 0 ){
+            building_granary_remove_resource(granary, f->resource_id, num_loads * 100);
+            f->loads_sold_or_carrying = num_loads;
+        }
         return;
     }
     // priority 2: warehouse
@@ -308,8 +318,18 @@ static void determine_granaryman_destination(figure *f, int road_network_id)
         f->resource_id, granary->distance_from_entry,
                       road_network_id, 0, &dst);
     if (dst_building_id) {
+        int num_loads;
+        int stored = building_granary_get_amount(granary, f->resource_id);
+        if (stored < 800) {
+            num_loads = stored / 100;
+        } else {
+            num_loads = 8;
+        }
         set_destination(f, FIGURE_ACTION_51_WAREHOUSEMAN_DELIVERING_RESOURCE, dst_building_id, dst.x, dst.y);
-        building_granary_remove_resource(granary, f->resource_id, 100);
+        if(f->loads_sold_or_carrying <= 0 ){
+            building_granary_remove_resource(granary, f->resource_id, num_loads * 100);
+            f->loads_sold_or_carrying = num_loads;
+        }
         return;
     }
     // priority 3: granary even though resource is on stockpile
@@ -317,8 +337,18 @@ static void determine_granaryman_destination(figure *f, int road_network_id)
         f->resource_id, granary->distance_from_entry, road_network_id, 1,
         0, &dst);
     if (dst_building_id) {
+        int num_loads;
+        int stored = building_granary_get_amount(granary, f->resource_id);
+        if (stored < 800) {
+            num_loads = stored / 100;
+        } else {
+            num_loads = 8;
+        }
         set_destination(f, FIGURE_ACTION_51_WAREHOUSEMAN_DELIVERING_RESOURCE, dst_building_id, dst.x, dst.y);
-        building_granary_remove_resource(granary, f->resource_id, 100);
+        if(f->loads_sold_or_carrying <= 0 ){
+            building_granary_remove_resource(granary, f->resource_id, num_loads * 100);
+            f->loads_sold_or_carrying = num_loads;
+        }
         return;
     }
     // nowhere to go to: kill figure
